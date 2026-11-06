@@ -1,0 +1,25 @@
+Pro-Test
+Author: Pratham Brahmbhatt
+Version: 1.0.0
+
+No licence is granted by this repository. The source archive contained no LICENSE
+file and no licence identifier. This notice does not choose one. Until the author
+does, do not assume a right to copy, modify, or redistribute the program.
+
+Provenance recorded in the source itself:
+
+- The package describes Pro-Test as a clean-room re-implementation of the
+  architecture used by Wapiti (https://wapiti-scanner.github.io). Wapiti is
+  published under GPL-2.0. The author states that Wapiti's source files and data
+  files are not included, and that Pro-Test's code, payload lists, and finding
+  descriptions were written for Pro-Test following Wapiti's design and detection
+  logic.
+- docs/wapiti-analysis.md says those notes were written by reading the Wapiti
+  3.3.2 source distribution from PyPI.
+- The author states that factual signatures such as DBMS error messages come
+  from well-known public sources (for example the patterns used by sqlmap).
+  sqlmap is also GPL-licensed. Whether that creates a licence obligation for
+  Pro-Test is unresolved here.
+
+Dependencies: the Python standard library only. Nothing in this tree is a
+vendored copy of Wapiti, sqlmap, or another project.

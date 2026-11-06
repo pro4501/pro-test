@@ -1,0 +1,42 @@
+type,category,severity,confidence,method,url,parameter,payload,evidence,info,module,wstg,curl
+vulnerability,Clickjacking Protection,Low,Confirmed,GET,http://127.0.0.1:8765/,,,"Headers received from http://127.0.0.1:8765/ (no X-Frame-Options):
+    Server: Pro-Test-Local-Demo Python/3.12.3
+    Date: Fri, 06 Nov 2026 15:14:24 GMT
+    Content-Type: text/html; charset=utf-8
+    Content-Length: 819
+    Cache-Control: no-store
+    Set-Cookie: demo_session=local-example; Path=/
+    Connection: close",X-Frame-Options is not set on http://127.0.0.1:8765/,http_headers,WSTG-CLNT-09,"curl ""http://127.0.0.1:8765/"""
+vulnerability,MIME Type Confusion,Low,Confirmed,GET,http://127.0.0.1:8765/,,,"Headers received from http://127.0.0.1:8765/ (no X-Content-Type-Options):
+    Server: Pro-Test-Local-Demo Python/3.12.3
+    Date: Fri, 06 Nov 2026 15:14:24 GMT
+    Content-Type: text/html; charset=utf-8
+    Content-Length: 819
+    Cache-Control: no-store
+    Set-Cookie: demo_session=local-example; Path=/
+    Connection: close",X-Content-Type-Options is not set on http://127.0.0.1:8765/,http_headers,WSTG-CONF-07,"curl ""http://127.0.0.1:8765/"""
+vulnerability,HttpOnly Flag cookie,Low,Confirmed,GET,http://127.0.0.1:8765/,demo_session,,"Set-Cookie: demo_session=local-example; Path=/
+(no 'HttpOnly' attribute: JavaScript, and therefore an XSS, can read it)",HttpOnly flag is not set on the cookie 'demo_session' set at 'http://127.0.0.1:8765/',cookieflags,WSTG-SESS-02,"curl ""http://127.0.0.1:8765/"""
+vulnerability,Secure Flag cookie,Low,Confirmed,GET,http://127.0.0.1:8765/,demo_session,,"Set-Cookie: demo_session=local-example; Path=/
+(no 'Secure' attribute: the cookie is also sent over plain HTTP)",Secure flag is not set on the cookie 'demo_session' set at 'http://127.0.0.1:8765/',cookieflags,WSTG-SESS-02,"curl ""http://127.0.0.1:8765/"""
+vulnerability,Content Security Policy Configuration,Low,Confirmed,GET,http://127.0.0.1:8765/,,,No Content-Security-Policy header in the response: injected scripts run without restriction,CSP is not set on http://127.0.0.1:8765/,csp,WSTG-CONF-12,"curl ""http://127.0.0.1:8765/"""
+vulnerability,Information Disclosure - Full Path,Low,Confirmed,GET,http://127.0.0.1:8765/,,,"...ds are discarded and are not shown back.
+Example server path, included on purpose so a passive check can see it:
+/var/www/local-demo/app/index.html
+Local demo debug page
+Username <input nam...",Response of http://127.0.0.1:8765/ contains a server path: /var/www/local-demo/app/index.html,information_disclosure,WSTG-ERRH-01,"curl ""http://127.0.0.1:8765/"""
+vulnerability,Information Disclosure - Full Path,Low,Confirmed,GET,http://127.0.0.1:8765/debug,,,"...a fake traceback written into this static page. Nothing raised it.
+Traceback (most recent call last):
+File ""/var/www/local-demo/app/debug.py"", line 12, in demo
+raise RuntimeError(""local demo fixture"")
+RuntimeError: local demo fixture...",Response of http://127.0.0.1:8765/debug contains a server path: /var/www/local-demo/app/debug.py,information_disclosure,WSTG-ERRH-01,"curl ""http://127.0.0.1:8765/debug"" -e ""http://127.0.0.1:8765/"""
+vulnerability,Cleartext Submission of Password,High,Confirmed,GET,http://127.0.0.1:8765/,password,,"<form method=""POST"" action=""http://127.0.0.1:8765/login""> contains <input type=""password"" name=""password"">
+The form target uses http:// so the password travels unencrypted.",Password field 'password' is sent in clear text from URL http://127.0.0.1:8765/ to http://127.0.0.1:8765/login,unsecure_password,WSTG-CRYP-03,"curl ""http://127.0.0.1:8765/"""
+vulnerability,Unencrypted Channels,Medium,Confirmed,GET,http://127.0.0.1:8765/,,,"GET http://127.0.0.1:8765/ -> HTTP 200
+Set-Cookie: demo_session=local-example; Path=/",Sensitive data (cookie in the response) was sent over HTTP to http://127.0.0.1:8765/; the server did not enforce HTTPS,https_redirect,WSTG-CRYP-03,"curl ""http://127.0.0.1:8765/"""
+vulnerability,Stack Trace Disclosure,Medium,Confirmed,GET,http://127.0.0.1:8765/debug,,,"Stack trace shown to visitors:
+    Traceback (most recent call last):
+    File ""/var/www/local-demo/app/debug.py"", line 12, in demo
+    raise RuntimeError(""local demo fixture"")
+    RuntimeError: local demo fixture
+    Back to the local demo home page",Python stack trace / debug information disclosed on http://127.0.0.1:8765/debug,stacktrace_disclosure,WSTG-ERRH-02,"curl ""http://127.0.0.1:8765/debug"" -e ""http://127.0.0.1:8765/"""

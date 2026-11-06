@@ -1,0 +1,27 @@
+
+ ____                     _____          _
+|  _ \ _ __ ___          |_   _|__  ___ | |_
+| |_) | '__/ _ \  _____    | |/ _ \/ __|| __|
+|  __/| | | (_) ||_____|   | |  __/\__ \| |_
+|_|   |_|  \___/           |_|\___||___/ \__|   
+ Created by Pratham Brahmbhatt.
+ Only scan targets you own or are explicitly authorised to test.
+
+[*] Scan profile: quick (default modules, shallow crawl (depth 5, 30 links per page))
+[*] Crawling the target (press Ctrl+C to stop the crawl and start attacking)
+[Low] X-Frame-Options is not set on http://127.0.0.1:8765/
+[Low] X-Content-Type-Options is not set on http://127.0.0.1:8765/
+[Low] HttpOnly flag is not set on the cookie 'demo_session' set at 'http://127.0.0.1:8765/'
+[Low] Secure flag is not set on the cookie 'demo_session' set at 'http://127.0.0.1:8765/'
+[Low] CSP is not set on http://127.0.0.1:8765/
+[Low] Response of http://127.0.0.1:8765/ contains a server path: /var/www/local-demo/app/index.html
+[High] Password field 'password' is sent in clear text from URL http://127.0.0.1:8765/ to http://127.0.0.1:8765/login
+[Medium] Sensitive data (cookie in the response) was sent over HTTP to http://127.0.0.1:8765/; the server did not enforce HTTPS
+[Low] Response of http://127.0.0.1:8765/debug contains a server path: /var/www/local-demo/app/debug.py
+[Medium] Python stack trace / debug information disclosed on http://127.0.0.1:8765/debug
+[*] Scan state saved in /tmp/protest-demo-sessions/127.0.0.1_8765_folder_9e435727.db
+[*] Pro-Test found 3 URLs and forms during the scan
+
+[*] Generating report...
+A report has been generated in the file examples/local-demo/output/report.txt
+[*] 4 HTTP requests sent

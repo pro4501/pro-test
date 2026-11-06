@@ -1,0 +1,363 @@
+# Pro-Test 1.0.0 report
+
+* **Target:** http://127.0.0.1:8765/
+* **Date:** Fri, 06 Nov 2026 15:14:24 +0000
+* **Scope:** folder
+* **Crawled pages:** 3
+
+## Summary of vulnerabilities
+
+| Category | Count |
+|---|---|
+| SQL Injection | 0 |
+| Cross Site Scripting | 0 |
+| Stored Cross Site Scripting | 0 |
+| HTML Injection | 0 |
+| Stored HTML Injection | 0 |
+| Command execution | 0 |
+| Path Traversal | 0 |
+| CRLF Injection | 0 |
+| Open Redirect | 0 |
+| Backup file | 0 |
+| Weak restriction bypass | 0 |
+| Cross Site Request Forgery | 0 |
+| Weak credentials | 0 |
+| Broken Access Control | 0 |
+| XML External Entity | 0 |
+| LDAP Injection | 0 |
+| Cleartext Submission of Password | 1 |
+| Unencrypted Channels | 1 |
+| Clickjacking Protection | 1 |
+| MIME Type Confusion | 1 |
+| HTTP Strict Transport Security (HSTS) | 0 |
+| HttpOnly Flag cookie | 1 |
+| Secure Flag cookie | 1 |
+| Content Security Policy Configuration | 1 |
+| Information Disclosure - Full Path | 2 |
+| Stack Trace Disclosure | 1 |
+| Inconsistent Redirection | 0 |
+| TLS/SSL misconfigurations | 0 |
+
+## Summary of anomalies
+
+| Category | Count |
+|---|---|
+| Internal Server Error | 0 |
+| Resource consumption | 0 |
+
+## Summary of additional information
+
+| Category | Count |
+|---|---|
+| HTTP Methods | 0 |
+| Fingerprint web technology | 0 |
+| Interesting files and directories | 0 |
+| SQL data extraction | 0 |
+
+## Cleartext Submission of Password
+
+**Description:** A password field is submitted over plain HTTP, exposing credentials to anyone on the network path.
+
+**Solution:** Serve login pages and their form targets exclusively over HTTPS.
+
+**WSTG:** WSTG-CRYP-03
+
+### [High] Password field 'password' is sent in clear text from URL http://127.0.0.1:8765/ to http://127.0.0.1:8765/login
+
+* Module: `unsecure_password`
+* Confidence: **Confirmed**
+* Parameter: `password`
+
+**Evidence**
+
+```text
+<form method="POST" action="http://127.0.0.1:8765/login"> contains <input type="password" name="password">
+The form target uses http:// so the password travels unencrypted.
+```
+
+```http
+GET / HTTP/1.1
+host: 127.0.0.1:8765
+```
+
+```bash
+curl "http://127.0.0.1:8765/"
+```
+
+## Unencrypted Channels
+
+**Description:** Sensitive data (cookies, parameters) travels over plain HTTP or the site does not redirect HTTP to HTTPS.
+
+**Solution:** Redirect all HTTP traffic to HTTPS and enable HSTS.
+
+**WSTG:** WSTG-CRYP-03
+
+### [Medium] Sensitive data (cookie in the response) was sent over HTTP to http://127.0.0.1:8765/; the server did not enforce HTTPS
+
+* Module: `https_redirect`
+* Confidence: **Confirmed**
+
+**Evidence**
+
+```text
+GET http://127.0.0.1:8765/ -> HTTP 200
+Set-Cookie: demo_session=local-example; Path=/
+```
+
+```http
+GET / HTTP/1.1
+host: 127.0.0.1:8765
+```
+
+```bash
+curl "http://127.0.0.1:8765/"
+```
+
+## Clickjacking Protection
+
+**Description:** The page can be framed by any site, enabling clickjacking (UI redressing) attacks.
+
+**Solution:** Send 'X-Frame-Options: DENY' (or SAMEORIGIN) or a CSP 'frame-ancestors' directive.
+
+**WSTG:** WSTG-CLNT-09
+
+### [Low] X-Frame-Options is not set on http://127.0.0.1:8765/
+
+* Module: `http_headers`
+* Confidence: **Confirmed**
+
+**Evidence**
+
+```text
+Headers received from http://127.0.0.1:8765/ (no X-Frame-Options):
+    Server: Pro-Test-Local-Demo Python/3.12.3
+    Date: Fri, 06 Nov 2026 15:14:24 GMT
+    Content-Type: text/html; charset=utf-8
+    Content-Length: 819
+    Cache-Control: no-store
+    Set-Cookie: demo_session=local-example; Path=/
+    Connection: close
+```
+
+```http
+GET / HTTP/1.1
+host: 127.0.0.1:8765
+```
+
+```bash
+curl "http://127.0.0.1:8765/"
+```
+
+## MIME Type Confusion
+
+**Description:** Without 'X-Content-Type-Options: nosniff' browsers may guess the content type of a response and execute content that was not meant to be scripts or styles.
+
+**Solution:** Send 'X-Content-Type-Options: nosniff' on every response.
+
+**WSTG:** WSTG-CONF-07
+
+### [Low] X-Content-Type-Options is not set on http://127.0.0.1:8765/
+
+* Module: `http_headers`
+* Confidence: **Confirmed**
+
+**Evidence**
+
+```text
+Headers received from http://127.0.0.1:8765/ (no X-Content-Type-Options):
+    Server: Pro-Test-Local-Demo Python/3.12.3
+    Date: Fri, 06 Nov 2026 15:14:24 GMT
+    Content-Type: text/html; charset=utf-8
+    Content-Length: 819
+    Cache-Control: no-store
+    Set-Cookie: demo_session=local-example; Path=/
+    Connection: close
+```
+
+```http
+GET / HTTP/1.1
+host: 127.0.0.1:8765
+```
+
+```bash
+curl "http://127.0.0.1:8765/"
+```
+
+## HttpOnly Flag cookie
+
+**Description:** A cookie is readable from JavaScript because the HttpOnly flag is missing; an XSS can steal it.
+
+**Solution:** Set the HttpOnly flag on session and sensitive cookies.
+
+**WSTG:** WSTG-SESS-02
+
+### [Low] HttpOnly flag is not set on the cookie 'demo_session' set at 'http://127.0.0.1:8765/'
+
+* Module: `cookieflags`
+* Confidence: **Confirmed**
+* Parameter: `demo_session`
+
+**Evidence**
+
+```text
+Set-Cookie: demo_session=local-example; Path=/
+(no 'HttpOnly' attribute: JavaScript, and therefore an XSS, can read it)
+```
+
+```http
+GET / HTTP/1.1
+host: 127.0.0.1:8765
+```
+
+```bash
+curl "http://127.0.0.1:8765/"
+```
+
+## Secure Flag cookie
+
+**Description:** A cookie can be sent over plain HTTP because the Secure flag is missing.
+
+**Solution:** Set the Secure flag on every cookie of an HTTPS application.
+
+**WSTG:** WSTG-SESS-02
+
+### [Low] Secure flag is not set on the cookie 'demo_session' set at 'http://127.0.0.1:8765/'
+
+* Module: `cookieflags`
+* Confidence: **Confirmed**
+* Parameter: `demo_session`
+
+**Evidence**
+
+```text
+Set-Cookie: demo_session=local-example; Path=/
+(no 'Secure' attribute: the cookie is also sent over plain HTTP)
+```
+
+```http
+GET / HTTP/1.1
+host: 127.0.0.1:8765
+```
+
+```bash
+curl "http://127.0.0.1:8765/"
+```
+
+## Content Security Policy Configuration
+
+**Description:** The Content-Security-Policy header is missing or contains unsafe directives, weakening protection against XSS and data injection.
+
+**Solution:** Deploy a strict CSP without 'unsafe-inline'/'unsafe-eval' and with restrictive default-src/script-src.
+
+**WSTG:** WSTG-CONF-12
+
+### [Low] CSP is not set on http://127.0.0.1:8765/
+
+* Module: `csp`
+* Confidence: **Confirmed**
+
+**Evidence**
+
+```text
+No Content-Security-Policy header in the response: injected scripts run without restriction
+```
+
+```http
+GET / HTTP/1.1
+host: 127.0.0.1:8765
+```
+
+```bash
+curl "http://127.0.0.1:8765/"
+```
+
+## Information Disclosure - Full Path
+
+**Description:** Responses reveal absolute file system paths of the server, which helps attackers target other attacks.
+
+**Solution:** Disable verbose errors in production and avoid printing server paths.
+
+**WSTG:** WSTG-ERRH-01
+
+### [Low] Response of http://127.0.0.1:8765/ contains a server path: /var/www/local-demo/app/index.html
+
+* Module: `information_disclosure`
+* Confidence: **Confirmed**
+
+**Evidence**
+
+```text
+...ds are discarded and are not shown back.
+Example server path, included on purpose so a passive check can see it:
+/var/www/local-demo/app/index.html
+Local demo debug page
+Username <input nam...
+```
+
+```http
+GET / HTTP/1.1
+host: 127.0.0.1:8765
+```
+
+```bash
+curl "http://127.0.0.1:8765/"
+```
+
+### [Low] Response of http://127.0.0.1:8765/debug contains a server path: /var/www/local-demo/app/debug.py
+
+* Module: `information_disclosure`
+* Confidence: **Confirmed**
+
+**Evidence**
+
+```text
+...a fake traceback written into this static page. Nothing raised it.
+Traceback (most recent call last):
+File "/var/www/local-demo/app/debug.py", line 12, in demo
+raise RuntimeError("local demo fixture")
+RuntimeError: local demo fixture...
+```
+
+```http
+GET /debug HTTP/1.1
+host: 127.0.0.1:8765
+referer: http://127.0.0.1:8765/
+```
+
+```bash
+curl "http://127.0.0.1:8765/debug" -e "http://127.0.0.1:8765/"
+```
+
+## Stack Trace Disclosure
+
+**Description:** An error page displays a stack trace that reveals frameworks, versions and code structure.
+
+**Solution:** Use generic error pages in production and log details server-side only.
+
+**WSTG:** WSTG-ERRH-02
+
+### [Medium] Python stack trace / debug information disclosed on http://127.0.0.1:8765/debug
+
+* Module: `stacktrace_disclosure`
+* Confidence: **Confirmed**
+
+**Evidence**
+
+```text
+Stack trace shown to visitors:
+    Traceback (most recent call last):
+    File "/var/www/local-demo/app/debug.py", line 12, in demo
+    raise RuntimeError("local demo fixture")
+    RuntimeError: local demo fixture
+    Back to the local demo home page
+```
+
+```http
+GET /debug HTTP/1.1
+host: 127.0.0.1:8765
+referer: http://127.0.0.1:8765/
+```
+
+```bash
+curl "http://127.0.0.1:8765/debug" -e "http://127.0.0.1:8765/"
+```
