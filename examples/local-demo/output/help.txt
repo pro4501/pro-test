@@ -126,7 +126,9 @@ options:
                         Custom header sent with every request ('Name: value')
   -A AGENT, --user-agent AGENT
                         Custom User-Agent
-  --verify-ssl {0,1}    Verify TLS certificates (default is no check)
+  --verify-ssl {0,1}    Verify TLS certificates: 1 (default) checks them, 0
+                        skips the check. Use 0 only for a localhost lab whose
+                        certificate you created
   --color               Colorize output
   -v {0,1,2}, --verbose {0,1,2}
                         Verbosity (0: quiet, 1: print attacked URLs, 2: print

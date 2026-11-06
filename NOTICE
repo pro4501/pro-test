@@ -2,24 +2,25 @@ Pro-Test
 Author: Pratham Brahmbhatt
 Version: 1.0.0
 
-No licence is granted by this repository. The source archive contained no LICENSE
-file and no licence identifier. This notice does not choose one. Until the author
-does, do not assume a right to copy, modify, or redistribute the program.
+No LICENSE file is included. Copyright remains with the author. This notice
+does not grant a licence to copy, modify, or redistribute the program.
 
-Provenance recorded in the source itself:
+Attribution and provenance:
 
 - The package describes Pro-Test as a clean-room re-implementation of the
   architecture used by Wapiti (https://wapiti-scanner.github.io). Wapiti is
-  published under GPL-2.0. The author states that Wapiti's source files and data
-  files are not included, and that Pro-Test's code, payload lists, and finding
-  descriptions were written for Pro-Test following Wapiti's design and detection
-  logic.
-- docs/wapiti-analysis.md says those notes were written by reading the Wapiti
-  3.3.2 source distribution from PyPI.
-- The author states that factual signatures such as DBMS error messages come
-  from well-known public sources (for example the patterns used by sqlmap).
-  sqlmap is also GPL-licensed. Whether that creates a licence obligation for
-  Pro-Test is unresolved here.
+  published under GPL-2.0. The author states that Wapiti's source files and
+  data files are not included, and that Pro-Test's code was written for
+  Pro-Test following that design. No Wapiti source file is in this tree.
+  docs/wapiti-analysis.md is the author's design notes. Those notes are not
+  Wapiti's code.
+- protest/active/mod_sql.py includes a list of regular expressions used to
+  recognise database error text. Several of those expressions, including
+  alternations that do not appear in the servers' own messages, match the
+  patterns shipped in sqlmap's errors.xml. sqlmap is GPL-2.0. That list is
+  copied data, not merely the same idea. It is the provenance conflict this
+  tree still carries. Replacing the list, or a later licence choice that
+  satisfies GPL-2.0, is the author's decision. This notice does not make it.
 
-Dependencies: the Python standard library only. Nothing in this tree is a
+Dependencies: the Python standard library only. Nothing else in this tree is a
 vendored copy of Wapiti, sqlmap, or another project.

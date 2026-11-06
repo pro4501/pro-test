@@ -15,48 +15,55 @@ Use Pro-Test only against:
   insecure and must never be deployed.
 
 You are responsible for the traffic the tool sends. The default module set is
-`common`. That set includes active modules. It is not a passive, read-only scan.
-Pass `-m passive` when you only want header, cookie, and response checks.
+`common`. That set is the normal authorised assessment: it includes active
+checks as well as passive ones. Pass `-m passive` when you only want header,
+cookie, and response checks.
 
 The interactive menu asks you to confirm permission once per host. The command
-line does not. Passing `-u` is that confirmation.
+line does not. Passing `-u` is that confirmation. The default scope stays on
+the target host. Database extraction stays off until `--exploit` or menu
+option 7.
+
+## High-impact actions that stay off until you opt in
+
+| Action | Switch | Warning |
+|---|---|---|
+| Read a database through a confirmed SQL injection | `--exploit`, menu option 7 | Separate from detection. Account-like tables are read first. |
+| Crawl other host names on the registered domain | `--scope domain` | Printed warning. Default `folder` does not do this. |
+| Follow links to any website | `--scope punk` | Printed warning. Every new host needs authorisation. |
+| Accept any TLS certificate | `--verify-ssl 0` | Printed warning. For a localhost lab whose certificate you created. |
+
+TLS verification is on by default (`--verify-ssl 1`) for the command line, the
+menu's reachability check, and later menu requests. The menu offers to turn it
+off only after a certificate check fails, or in Custom settings, and the
+default answer is no.
 
 ## Do not
 
 - Scan hosts, IP ranges, or third-party sites you are not allowed to test.
-- Use `--scope punk`. That scope follows links onto other websites.
+- Use `--scope punk` or `--scope domain` unless every host that can be reached
+  is one you are authorised to test.
+- Pass `--verify-ssl 0` against a system whose certificate you do not control.
 - Commit `~/.pro-test/`, session databases, `protest.key`, reports from real
   assessments, cookies, tokens, or passwords.
 - Deploy `examples/local-demo/server.py`. It listens on `127.0.0.1` only, on
   purpose, and it omits security headers on purpose.
 - Treat this repository as permission to attack systems, or as a licence to
-  redistribute the program. There is no licence grant yet. See `NOTICE`.
+  redistribute the program. No licence is granted. See `NOTICE`.
 
-## Public-release blockers
+## Provenance note
 
-These are already in the imported source. They were not added here, and they
-were not run against the demo fixture or any other target during release
-preparation. They should be decided by the author before this repository is
-made public.
+`protest/active/mod_sql.py` contains DBMS-detection regular expressions that
+match sqlmap's GPL-2.0 `errors.xml`, including alternations that are not the
+wording of the database server. That overlap is a copied-data question for the
+author to resolve before publication. It is separate from the tool being a
+scanner. No Wapiti or sqlmap source tree is included here. Design notes in
+`docs/wapiti-analysis.md` are not a copy of Wapiti's code.
 
-1. **Database extraction (Step 5).** `protest/reporting/exploit.py`, the
-   `--exploit` options, and menu option 7 take a confirmed SQL injection and
-   read tables, columns, and rows, with credential-like tables first. That is
-   exploitation, not detection.
-2. **Active attack modules.** The implementation sends test payloads for SQL
-   injection, cross-site scripting, command execution, path traversal, XXE,
-   LDAP injection, Shellshock, CSRF replay, backup-file download, login
-   guessing, and related checks. Names and impacts are listed in the README.
-   Payload text is not repeated here.
-3. **No licence.** See `NOTICE`. Wapiti and sqlmap are GPL-2.0 projects that
-   the author's own notes say were studied. A public release needs the author's
-   licence decision, including whether those notes create a further obligation.
-4. **TLS checking is off by default.** `--verify-ssl` defaults to `0`.
-5. **Credential storage uses a home-grown construction.** `protest/core/vault.py`
-   encrypts passwords and tokens with HMAC-SHA256 because the standard library
-   has no AES. The module's own docstring says to prefer a reviewed
-   implementation such as AES-GCM for production use. The key file next to the
-   database decrypts the secrets.
+Credential storage uses a home-grown HMAC construction in
+`protest/core/vault.py` because the standard library has no AES. The module's
+docstring says to prefer a reviewed implementation such as AES-GCM for
+production use. The key file next to the database decrypts the secrets.
 
 No backdoor, persistence mechanism, or phone-home request was found in the
 source. Form fields that the crawler fills used to default the email input to

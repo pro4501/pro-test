@@ -22,7 +22,7 @@ pro-test -u http://127.0.0.1:8765/ -m passive --profile quick --no-database \
 
 Other formats use the same command with `-f json`, `md`, `html`, `csv`, or `xml` and a matching `-o` file. Stop the server with Ctrl+C. Remove `/tmp/protest-demo-sessions` afterwards. That directory is a session database and is not part of the repository.
 
-The interactive menu was exercised against the same URL with choice `17` (passive), settings `2` (quick), and then `0` to exit. Menu option 7 (database extraction) was not used.
+The interactive menu was exercised against the same URL with choice `17` (passive), settings `2` (quick), and then `0` to exit. Menu option 7 (database extraction) was not used. The fixture is plain HTTP, so the default TLS check does not apply to it. The menu and scan screenshots match this passive run. `output/help.txt` and `screenshots/help.png` match `pro-test --help` after certificate verification was made the default.
 
 ## What the run printed
 

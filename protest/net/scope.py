@@ -1,12 +1,15 @@
 """Scan scope: decides which discovered URLs are allowed to be crawled and attacked.
 
-Scopes (same semantics as Wapiti):
-    url        only the exact base URL
-    page       the base page with any query string
-    folder     everything under the base URL's folder (default)
+Scopes:
+    url        only the exact base URL (same host)
+    page       the base page with any query string (same host)
+    folder     everything under the base URL's folder (default; same host)
     subdomain  everything on the same host name
-    domain     everything on the same registered domain (and its subdomains)
-    punk       everything (use with extreme care)
+    domain     other host names on the same registered domain (explicit; leaves the target host)
+    punk       any website the crawl can reach (explicit; leaves the target host)
+
+``url``, ``page``, ``folder`` and ``subdomain`` refuse a different host name.
+Nothing in the default crawl widens that to ``domain`` or ``punk``.
 """
 import ipaddress
 import re
@@ -60,8 +63,11 @@ class Scope:
         if self._scope == "domain":
             host = urlsplit(url).hostname or ""
             return registered_domain(host) == registered_domain(self._base.hostname)
+        # url, page, folder and subdomain stay on the target host. domain and punk do not.
+        if (urlsplit(url).hostname or "") != self._base.hostname:
+            return False
         if self._scope == "subdomain":
-            return (urlsplit(url).hostname or "") == self._base.hostname
+            return True
         if self._scope == "folder":
             return url.startswith(self._base.dir_name if not self._base.path.endswith("/") else self._base.path)
         if self._scope == "page":

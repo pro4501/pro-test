@@ -115,20 +115,42 @@ def normalize_url(url: str) -> Optional[str]:
     return url if parts.path else url + "/"
 
 
-def step_url() -> str:
+def _tls_failure(error: BaseException) -> bool:
+    text = str(error).lower()
+    return "certificate" in text or "ssl" in text or "tls" in text
+
+
+def step_url(session: dict) -> str:
     title("STEP 1 - Target URL")
     print("Enter the address of the web application to test, e.g. http://127.0.0.1:8008/")
+    print("  TLS certificates are checked. Plain HTTP on localhost does not use TLS.")
     while True:
         url = normalize_url(ask("Target URL"))
         if not url:
             print(color("  Invalid URL. Use a full address such as http://example.com/app/", "red"))
             continue
         print(f"  Checking {url} ...")
-        client = HttpClient(ClientConfiguration(timeout=10))
+        client = HttpClient(ClientConfiguration(timeout=10, verify_ssl=bool(session.get("verify_ssl", True))))
         try:
             response = client.send(Request(url))
         except (RequestError, InvalidURL) as error:
-            print(color(f"  Target unreachable: {error}", "red"))
+            if session.get("verify_ssl", True) and _tls_failure(error):
+                print(color(f"  TLS certificate check failed: {error}", "orange"))
+                print(color("  Turning verification off accepts any certificate. Do that only for a localhost", "orange"))
+                print(color("  lab whose certificate you created, and only if you are authorised to test it.", "orange"))
+                if ask("  Turn certificate verification off for this scan? (yes/no)", "no").lower() in ("y", "yes"):
+                    session["verify_ssl"] = False
+                    client = HttpClient(ClientConfiguration(timeout=10, verify_ssl=False))
+                    try:
+                        response = client.send(Request(url))
+                    except (RequestError, InvalidURL) as again:
+                        print(color(f"  Target unreachable: {again}", "red"))
+                    else:
+                        print(color(f"  Target is up (HTTP {response.status}, "
+                                    f"{response.headers.get('server', 'unknown server')})", "green"))
+                        return url
+            else:
+                print(color(f"  Target unreachable: {error}", "red"))
             if ask("  Try another URL? (y/n)", "y").lower().startswith("y"):
                 continue
             raise KeyboardInterrupt from None
@@ -139,7 +161,9 @@ def step_url() -> str:
 
 def confirm_authorisation(url: str) -> bool:
     print()
-    print(color("  WARNING: active attacks send real attack payloads to the target.", "orange"))
+    print(color("  WARNING: active checks send real test traffic to the target.", "orange"))
+    print("  The default scope stays on this host. Database extraction stays off until you choose it")
+    print("  (menu option 7, or --exploit on the command line).")
     answer = ask(f"  Do you own {urlsplit(url).netloc} or have written permission to test it? (yes/no)", "no")
     return answer.lower() in ("y", "yes")
 
@@ -178,10 +202,10 @@ SETTINGS_CHOICES = [
 ]
 
 
-def step_settings() -> dict:
+def step_settings(session: dict) -> dict:
     """One question: Standard / Quick profile, or Custom to set every option yourself."""
     settings = {"scope": "folder", "depth": "40", "timeout": "6", "tasks": "8", "cookie": "", "level": "1",
-                "max_rps": "0", "profile": "standard"}
+                "max_rps": "0", "profile": "standard", "verify_ssl": bool(session.get("verify_ssl", True))}
     print()
     print(color("  Scan settings", "bold"))
     for index, (_, label, description) in enumerate(SETTINGS_CHOICES, start=1):
@@ -195,8 +219,16 @@ def step_settings() -> dict:
     if selected != "custom":
         settings["profile"] = selected
         return settings
-    print("  Scope: url | page | folder | subdomain | domain")
+    print("  Scope on the target host: url | page | folder | subdomain")
+    print("  Off-host, explicit only: domain (other names on the registered domain) | punk (any website)")
     settings["scope"] = ask("  Scope", settings["scope"])
+    if settings["scope"] in ("domain", "punk"):
+        print(color("  That scope leaves the target host. Continue only for names you are authorised to test.",
+                    "orange"))
+    verify = ask("  Verify TLS certificates? 1 = on (default), 0 = off for a localhost lab",
+                 "0" if not settings["verify_ssl"] else "1")
+    settings["verify_ssl"] = verify.strip() != "0"
+    session["verify_ssl"] = settings["verify_ssl"]
     settings["depth"] = ask("  Max crawl depth", settings["depth"])
     settings["timeout"] = ask("  Request timeout (seconds)", settings["timeout"])
     settings["tasks"] = ask("  Concurrent threads", settings["tasks"])
@@ -230,6 +262,7 @@ def run_scan(url: str, modules: str, settings: dict) -> Tuple[int, str]:
     argv = ["-u", url, "-m", modules, "--scope", settings["scope"], "-d", settings["depth"],
             "-t", settings["timeout"], "--tasks", settings["tasks"], "-l", settings["level"],
             "--profile", settings.get("profile", "standard"), "--max-rps", settings.get("max_rps", "0"),
+            "--verify-ssl", "1" if settings.get("verify_ssl", True) else "0",
             "--store-session", MENU_SESSION_DIR, "--flush-session"]
     if settings.get("cookie"):
         argv += ["-C", settings["cookie"]]
@@ -371,7 +404,8 @@ BROWSER_CATEGORIES = ("Cross Site Scripting", "HTML Injection", "Open Redirect",
 
 def make_client(settings: dict) -> HttpClient:
     """Same HTTP settings as the scan (timeout, cookie, rate limit)."""
-    config = ClientConfiguration(timeout=float(settings.get("timeout") or 6))
+    config = ClientConfiguration(timeout=float(settings.get("timeout") or 6),
+                                 verify_ssl=bool(settings.get("verify_ssl", True)))
     if settings.get("cookie"):
         config.headers["Cookie"] = settings["cookie"]
     config.max_rps = float(settings.get("max_rps") or 0)
@@ -603,17 +637,18 @@ def menu_main() -> int:
     print(BANNER.format(version=f"{NAME} {VERSION}"))
     authorised = set()  # hosts the user confirmed permission for (asked once per host)
     try:
-        url = step_url()
+        session = {"verify_ssl": True}
+        url = step_url(session)
         while True:
             host = urlsplit(url).netloc
             if host not in authorised:
                 if not confirm_authorisation(url):
                     print(color("  Scan cancelled: only test systems you are authorised to test.", "red"))
-                    url = step_url()
+                    url = step_url(session)
                     continue
                 authorised.add(host)
             attack_label, modules = step_attacks()
-            settings = step_settings()
+            settings = step_settings(session)
             wants_access = "access_control" in modules.split(",")
             if modules == "all":
                 wants_access = ask("  Include access-control testing with two test accounts? (y/n)",
@@ -650,7 +685,7 @@ def menu_main() -> int:
                 elif action == "4":
                     break
                 elif action == "5":
-                    url = step_url()
+                    url = step_url(session)
                     break
                 elif action == "6":
                     show_findings(findings, pages, attack_label, full=True)

@@ -4,21 +4,28 @@ Pro-Test is a web application vulnerability scanner written in pure Python. It c
 
 The program banner names the author as **Pratham Brahmbhatt**.
 
-**Only scan an application you own or have written permission to test.** The verified walkthrough below uses the localhost fixture in `examples/local-demo/` and the passive checks only (`-m passive`). Read [SECURITY.md](SECURITY.md) before any other use. This repository does not grant a licence; see [NOTICE](NOTICE).
+**Only scan an application you own or have written permission to test.** The verified walkthrough below uses the localhost fixture in `examples/local-demo/` and the passive checks only (`-m passive`). Read [SECURITY.md](SECURITY.md) before any other use.
 
-## Public-release blockers
+No `LICENSE` file is present. Copyright stays with the author. This repository does not grant a licence to copy, modify, or redistribute the program. Attribution is in [NOTICE](NOTICE).
 
-These are already in the imported source. This release preparation did not run them and did not extend them. They need a decision before the repository is made public.
+## Authorisation and explicit opt-in
 
-| Blocker | Where it lives |
-|---|---|
-| Database extraction. A confirmed SQL injection can be used to read tables, columns, and rows, with account-like tables first. | `protest/reporting/exploit.py`, `--exploit`, menu option 7 |
-| Active modules that send test traffic for injection, command execution, file access, login guessing, and related issues. | `protest/active/`, default module set `common` |
-| No licence file. The author's notes discuss Wapiti (GPL-2.0) and public DBMS error signatures. | [NOTICE](NOTICE) |
-| TLS certificate checking is off unless you pass `--verify-ssl 1`. | `cli.py` |
-| Passwords and tokens in the history database use the home-grown construction in `protest/core/vault.py`. | `~/.pro-test/protest.key` |
+The tool's purpose is an authorised assessment: crawl, passive checks, and the active modules in `protest/active/`. Omitting `-m` loads `common`, which includes active checks (`exec`, `file`, `sql`, `xss`, `permanentxss`, `redirect`, `ssl`) as well as the passive checks. That is the normal scan, and it still requires permission. Pass `-m passive` when the run should only read responses.
 
-No phone-home request, persistence mechanism, or hardcoded customer target was found. A previous form-filler address on `mailinator.com` is now `user@example.com`.
+These actions are off unless you ask for them. Each one prints a warning or sits behind its own flag:
+
+| Action | How you turn it on | What it does |
+|---|---|---|
+| Database extraction | `--exploit`, or menu option 7 after a scan | Reads tables and rows through a confirmed SQL injection. Account-like tables are read first. |
+| Leave the target host | `--scope domain` | Other host names on the same registered domain. |
+| Follow links to any site | `--scope punk` | No host limit. Every host reached needs its own authorisation. |
+| Skip TLS checks | `--verify-ssl 0` | Accepts any certificate. Meant for a localhost lab whose certificate you created. |
+
+The default scope is `folder`: the crawl stays on the target host, under the base URL's directory. `url`, `page`, and `subdomain` also stay on that host. Nothing in the default path switches the scope to `domain` or `punk`.
+
+TLS certificate verification is on by default in the command line and in the menu. Plain HTTP, including the localhost demo, does not use a certificate. The menu asks before it will turn verification off, and only after a certificate check has failed or you open Custom settings.
+
+No phone-home request, persistence mechanism, or hardcoded customer target was found. A previous form-filler address on `mailinator.com` is now `user@example.com`. Passwords stored in the history database use the home-grown construction in `protest/core/vault.py`; a reviewed AES-GCM implementation is preferable for production storage of those secrets.
 
 ## Prerequisites
 
@@ -115,7 +122,7 @@ One of `-u URL` or `--list-modules` is required for a non-menu run. The URL need
 |---|---|
 | `-u`, `--url` | Base URL. Default scope is `folder`. |
 | `--data` | URL-encoded body. Sends the base URL as POST. |
-| `--scope` | `url`, `page`, `folder`, `subdomain`, `domain`, or `punk`. `punk` follows links onto other sites. |
+| `--scope` | `url`, `page`, `folder` (default), or `subdomain` stay on the target host. `domain` and `punk` are explicit off-host modes and print a warning. |
 | `-s`, `--start` | Extra start URL, or a file of URLs. Repeatable. |
 | `-x`, `--exclude` | URL or wildcard to skip. Repeatable. |
 | `-d`, `--depth` | Crawl depth. Default 40. |
@@ -141,7 +148,7 @@ One of `-u URL` or `--list-modules` is required for a non-menu run. The URL need
 | `--no-auto-throttle` | Keep the current rate when the server returns 429 or 503. |
 | `-H`, `-A` | Extra header, or User-Agent. |
 | `-p`, `--proxy` | HTTP or HTTPS proxy URL. |
-| `--verify-ssl` | `0` (default) or `1`. |
+| `--verify-ssl` | `1` (default) checks TLS certificates. `0` skips the check, prints a warning, and is for a localhost lab whose certificate you created. |
 | `--color` | ANSI colours. Off unless you pass this flag. |
 | `-v`, `--verbose` | `0` quiet, `1` print each attacked URL, `2` print every request. |
 | `--log` | Append a log file. |
@@ -171,7 +178,7 @@ Omitting `-m` loads `common`. That set includes the active modules `exec`, `file
 | `-f`, `--format` | `html`, `json`, `txt`, `csv`, `md`, or `xml`. Default `html`. |
 | `-o`, `--output` | File or directory. |
 | `-dr`, `--detailed-report` | `1` adds the crawled URL list. `2` also stores response bodies for findings. |
-| `--exploit` and `--exploit-technique`, `--exploit-max-requests`, `--exploit-max-rows`, `--exploit-output` | Step 5 database extraction. Present in the program. Not used for the sample reports. See [SECURITY.md](SECURITY.md). |
+| `--exploit` and `--exploit-technique`, `--exploit-max-requests`, `--exploit-max-rows`, `--exploit-output` | Opt-in database extraction after a confirmed SQL injection. Off unless you pass `--exploit`. Not used for the sample reports. |
 
 HTML reports with no `-o` go to `~/.pro-test/generated_report/`. Other formats with no `-o` are written in the current directory, with a name based on the host and the time.
 
@@ -296,11 +303,11 @@ The sample files are **LOCAL DEMO / EXAMPLE** output from `http://127.0.0.1:8765
 
 - The crawler understands HTML links and forms with the standard library. It does not run JavaScript, drive a browser, import OpenAPI, or speak NTLM, SOCKS, or Tor.
 - There is no out-of-band callback server. Cross-site scripting checks use a `pro-test.invalid` hostname, which is not a host this program contacts.
-- `--verify-ssl 0` is the default, so a HTTPS target with a bad certificate is still scanned.
+- TLS certificates are checked unless you pass `--verify-ssl 0`. A localhost lab with a certificate you created is the case that flag is for. Plain HTTP is unchanged.
 - `vault.py` documents its own limit: the construction is HMAC-SHA256 made from the standard library, and a reviewed AES-GCM implementation is preferable for production storage.
-- `scope=punk` is not limited to the host you typed.
-- A target that refuses the connection now exits 1 and does not write a report. A target that answers, even with an empty or error page, still exits 0.
-- The original notes refer to a fictional practice site and a sibling `Test-Server/university_site.py`. That server was not in the source archive and was not recreated. `tests/test_end_to_end.py` skips when the module is absent.
+- `domain` and `punk` are the scopes that leave the target host. Both are selected by name and print a warning. The default `folder` scope does not.
+- A target that refuses the connection exits 1 and does not write a report. A target that answers, even with an empty or error page, still exits 0.
+- The author's notes refer to a fictional practice site and a sibling `Test-Server/university_site.py`. That server is not in this tree. Rebuilding it here would mean standing up the old multi-issue lab, so the 11 tests that import it stay skipped. They are not passes. Database extraction was not run against that missing server or against the passive localhost fixture (the fixture has nothing to extract).
 - The menu is a sequence of prompts. Piped input works; colours follow whether stdout is a terminal.
 
 Differences the author recorded relative to Wapiti (headless browsing, an intercepting proxy, Swagger import, NTLM, browser cookie import, out-of-band modules, and modules built on large external databases) are described in [docs/wapiti-analysis.md](docs/wapiti-analysis.md). [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md) is the author's map of the source.
@@ -314,6 +321,8 @@ Differences the author recorded relative to Wapiti (headless browsing, an interc
 | `invalid choice: 'safe'` | The only profiles are `standard` and `quick`. |
 | `Invalid base URL` and exit 2 | Include `http://` or `https://`. |
 | `No page could be retrieved` and exit 1 | Nothing accepted the connection. Start the fixture, or check the host and port. |
+| `TLS certificate verification is off` | You passed `--verify-ssl 0`. Turn it back on for any host whose certificate you did not create. |
+| `certificate verify failed` | The default check rejected the certificate. For a localhost lab you control, pass `--verify-ssl 0` or accept the menu prompt. |
 | `HTTP authentication failed` and exit 1 | The server answered 4xx to the Basic or Digest credentials. |
 | A second run seems to skip the crawl | A session file already exists. Pass `--flush-session` or `--resume-crawl`. |
 | The menu says the scan was cancelled | The permission question defaults to no. Answer `yes` only for a host you are allowed to test. |
@@ -331,7 +340,9 @@ python -m pip install -e .
 python -m unittest tests.test_units tests.test_local_demo tests.test_cli_smoke tests.test_end_to_end -v
 ```
 
-On this tree that command reports 34 tests run and 11 skipped. The skipped tests are the end-to-end scans that import `university_site`, which is not part of this source tree. `tests/test_exploit_step5.py` drives database extraction against an in-process stand-in. It was not run for this release preparation. `python -m unittest discover -s tests -t .` collects that module as well; use the command above when you want the release checks only.
+The command above collects 34 tests. 11 are skipped and 23 are executed. On the run recorded for this release, all 23 executed tests passed. The 11 skips are not passes: they are the end-to-end and access-control cases in `tests/test_end_to_end.py`, which import `university_site`. That legacy practice server is not in this tree, and it was not replaced with a stand-in that pretends those cases ran.
+
+`tests/test_exploit_step5.py` drives database extraction against an in-process stand-in. It was not executed for this release. `python -m unittest discover -s tests -t .` collects that module as well; use the command above for the release checks. The coverage gap is those 11 skipped cases plus the unrun extraction test.
 
 `tests/test_units.py` covers requests, the crawler mutator, scope, module-name parsing, the credential vault, and the local XSS context checker. `tests/test_local_demo.py` checks that the fixture stays on `127.0.0.1` and does not reflect input. `tests/test_cli_smoke.py` checks exit codes 2 and 1 for a bad URL and a closed port.
 
@@ -355,6 +366,6 @@ docs/        author's code guide and Wapiti notes
 
 ## Licence and provenance
 
-No `LICENSE` file was in the source, and this repository does not add one. [NOTICE](NOTICE) records the author's statements about Wapiti and about error-message signatures. Until the author chooses a licence, do not treat the code as available to copy or redistribute.
+There is no `LICENSE` file. That means normal copyright: the author keeps all rights, and no licence is granted. [NOTICE](NOTICE) keeps the attribution and the provenance notes. One item in that notice is a real copy, not just inspiration: a set of DBMS-detection regular expressions in `protest/active/mod_sql.py` matches sqlmap's GPL-2.0 `errors.xml`, including alternations that are not the database server's own text. No Wapiti or sqlmap source file is vendored in this tree. The architecture notes in `docs/wapiti-analysis.md` describe Wapiti; they are not a copy of its code. Resolving the regex overlap (replace those patterns, or a licence choice that satisfies GPL-2.0) is the provenance decision still open. This repository does not make that choice.
 
 ![Lower portion of pro-test --help, captured in xterm](examples/local-demo/screenshots/help.png)

@@ -1,5 +1,9 @@
 """End-to-end test: scan the fictional Northbridge University practice site with every module and check the report.
 
+The practice server (university_site.py) is not in this source tree. Both test
+classes skip in that case. A skip is not a pass, and this file does not invent
+a replacement target.
+
 Run:  python -m unittest tests.test_end_to_end -v
 """
 import json

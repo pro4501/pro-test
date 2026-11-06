@@ -107,8 +107,12 @@ class ScopeAndModulesTest(unittest.TestCase):
         base = Request("http://www.ex.com/app/index.php")
         self.assertTrue(Scope(base, "folder").check("http://www.ex.com/app/other.php"))
         self.assertFalse(Scope(base, "folder").check("http://www.ex.com/other.php"))
+        self.assertFalse(Scope(base, "folder").check("http://api.ex.com/app/other.php"))
+        self.assertFalse(Scope(base, "folder").check("http://www.ex.com.evil/app/other.php"))
         self.assertTrue(Scope(base, "domain").check("http://api.ex.com/"))
         self.assertFalse(Scope(base, "subdomain").check("http://api.ex.com/"))
+        self.assertTrue(Scope(base, "subdomain").check("http://www.ex.com/elsewhere"))
+        self.assertTrue(Scope(base, "punk").check("http://anywhere.example/"))
         self.assertTrue(Scope(base, "page").check("http://www.ex.com/app/index.php?x=1"))
         self.assertFalse(Scope(base, "url").check("http://www.ex.com/app/index.php?x=1"))
 
@@ -172,6 +176,10 @@ class RateLimitAndProfileTest(unittest.TestCase):
         apply_profile(args)
         self.assertEqual(args.depth, 3)                 # explicit value kept
         self.assertEqual(args.max_links_per_page, 30)   # profile value applied
+        self.assertEqual(args.check_ssl, 1)             # TLS verification is on unless opted out
+        self.assertEqual(build_parser().parse_args(["-u", "http://example.com/", "--verify-ssl", "0"]).check_ssl, 0)
+        from protest.net.client import ClientConfiguration  # pylint: disable=import-outside-toplevel
+        self.assertTrue(ClientConfiguration().verify_ssl)
         with self.assertRaises(SystemExit):             # removed profiles are rejected
             build_parser().parse_args(["-u", "http://example.com/", "--profile", "safe"])
 

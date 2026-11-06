@@ -161,8 +161,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-H", "--header", action="append", default=[], dest="headers", metavar="HEADER",
                         help="Custom header sent with every request ('Name: value')")
     parser.add_argument("-A", "--user-agent", metavar="AGENT", help="Custom User-Agent")
-    parser.add_argument("--verify-ssl", type=int, default=0, choices=[0, 1], dest="check_ssl",
-                        help="Verify TLS certificates (default is no check)")
+    parser.add_argument("--verify-ssl", type=int, default=1, choices=[0, 1], dest="check_ssl",
+                        help="Verify TLS certificates: 1 (default) checks them, 0 skips the check. "
+                             "Use 0 only for a localhost lab whose certificate you created")
     parser.add_argument("--color", action="store_true", help="Colorize output")
     parser.add_argument("-v", "--verbose", type=int, default=0, choices=[0, 1, 2], dest="verbosity",
                         help="Verbosity (0: quiet, 1: print attacked URLs, 2: print every request)")
@@ -407,7 +408,17 @@ def _run_scan(args: argparse.Namespace, recorder: ScanRecorder) -> int:
     base_request = Request(url, method="POST", post_params=args.data) if args.data else Request(url)
     scope = Scope(base_request, args.scope)
     if args.scope == "punk":
-        log.log_orange("[*] Do you feel lucky punk? (scope=punk follows links to ANY website)")
+        log.warning("[!] Scope 'punk' follows links onto any website, not only the target host. "
+                    "Every host the crawl reaches must be one you are authorised to test. "
+                    "The default scope 'folder' stays on the target host.")
+    elif args.scope == "domain":
+        log.warning("[!] Scope 'domain' leaves the target host and includes other names on the same "
+                    "registered domain. Test only names you are authorised to test. "
+                    "The default scope 'folder' stays on the target host.")
+    if not args.check_ssl:
+        log.warning("[!] TLS certificate verification is off (--verify-ssl 0). Any certificate is accepted. "
+                    "Use this only for a localhost lab whose certificate you created, and only on a host "
+                    "you are authorised to test.")
 
     # ------------------------------------------------------------------ HTTP client
     config = ClientConfiguration(timeout=args.timeout, verify_ssl=bool(args.check_ssl), proxy=args.proxy,

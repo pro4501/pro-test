@@ -54,7 +54,7 @@ class HttpCredential:
 @dataclass
 class ClientConfiguration:
     timeout: float = 10.0
-    verify_ssl: bool = False
+    verify_ssl: bool = True
     proxy: Optional[str] = None
     headers: dict = field(default_factory=dict)
     cookies: http.cookiejar.CookieJar = field(default_factory=http.cookiejar.CookieJar)
