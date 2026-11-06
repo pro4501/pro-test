@@ -25,6 +25,7 @@ from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from typing import Deque, Dict, Iterator, List, Optional, Tuple
 
 from protest.core import log
+from protest.core.control import ScanStopped
 from protest.parsing.page import Html, extract_js_urls
 from protest.net.client import HttpClient, InvalidURL, RequestError
 from protest.net.request import Request, parse_qsl
@@ -209,6 +210,8 @@ class Explorer:
             self._hostnames.add(request.hostname)
         try:
             response = self.client.send(request)
+        except ScanStopped:
+            return False, [], None
         except (RequestError, InvalidURL) as exception:
             log.error(f"[!] {exception.__class__.__name__} with URL {request.url}: {exception}")
             return False, [], None
@@ -255,6 +258,9 @@ class Explorer:
         executor = ThreadPoolExecutor(max_workers=self.tasks, thread_name_prefix="crawler")
         try:
             while True:
+                control = getattr(self.client, "control", None)
+                if control is not None and control.stopped:
+                    self.stop_event.set()
                 # 1. Keep the thread pool busy (but not overloaded) with the next requests that pass
                 #    the crawl limits.
                 while to_explore and len(futures) < self.tasks * 2 and not self.stop_event.is_set():
@@ -282,6 +288,9 @@ class Explorer:
                     request = futures.pop(future)
                     try:
                         success, resources, response = future.result()
+                    except ScanStopped:
+                        self.stop_event.set()
+                        continue
                     except Exception as exception:  # pylint: disable=broad-except
                         log.error(f"[!] {request} generated an exception: {exception!r}")
                         continue

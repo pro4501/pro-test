@@ -48,7 +48,7 @@ from typing import Iterator, List, Optional, Tuple
 
 from protest.active.base import Attack, Mutator, Parameter, ParameterSituation, Payload
 from protest.active.payloads import TIMESQL_PAYLOADS
-from protest.core.definitions import CONFIRMED, SQL_INJECTION
+from protest.core.definitions import CONFIRMED, POSSIBLE, PROBABLE, SQL_INJECTION
 from protest.core.evidence import around, excerpt
 from protest.parsing.page import Html
 from protest.net.client import InvalidURL, ReadTimeout, RequestError
@@ -206,6 +206,16 @@ def describe_query(context: str, column: str, original: str, payload: str) -> st
             f"    {injected_query}")
 
 
+def sql_error_confidence(vuln_info: str, reproduced: bool, context: str) -> str:
+    """DBMS-specific, reproduced, and a known query context is the only Confirmed error case."""
+    specific = str(vuln_info).startswith("SQL Injection (DBMS")
+    if specific and reproduced and context:
+        return CONFIRMED
+    if reproduced:
+        return PROBABLE
+    return POSSIBLE
+
+
 def _situation_methods(situation: ParameterSituation) -> str:
     if situation == ParameterSituation.QUERY_STRING:
         return "G"
@@ -285,10 +295,10 @@ class ModuleSql(Attack):
                                        payload.payload) if context else ""
                 if query:
                     evidence += "\n" + query
-                # Confirmed = the error comes back on a second attempt AND the probes could tell how the input is
-                # embedded in the query (the database really parses it).
+                # Confirmed only for a DBMS-specific error that comes back again and whose context
+                # could be inferred. Generic strings and unreproduced errors stay weaker.
                 reproduced = self.reverify(mutated, lambda r: bool(find_pattern_in_response(r.content)))
-                confidence = self.confidence_from(reproduced, strong=bool(context))
+                confidence = sql_error_confidence(vuln_info, reproduced, context)
                 evidence += f"\nRe-verification: error {'reproduced' if reproduced else 'NOT reproduced'} on a " \
                             f"second request."
                 self.add_critical(SQL_INJECTION, request=mutated, parameter=parameter.display_name,
@@ -346,10 +356,10 @@ class ModuleSql(Attack):
             evidence = "The page changes depending on a SQL condition we control:\n    " + "\n    ".join(lines)
             if query:
                 evidence += "\n" + query
-            # Four TRUE/FALSE tests against a baseline that was stable twice: the condition is evaluated by the DB
+            # Four page differences are a strong sign, not proof that a statement was executed.
             self.add_critical(SQL_INJECTION, request=state["evil"], parameter=parameter.display_name,
                               info=self.injection_message("SQL Injection (boolean based)", request.path, parameter),
-                              response=resp, payload=evil.payload, evidence=evidence, confidence=CONFIRMED)
+                              response=resp, payload=evil.payload, evidence=evidence, confidence=PROBABLE)
             return True
 
         for mutated, parameter, payload in mutator.mutate(request, generate_boolean_payloads):

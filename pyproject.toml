@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pro-test"
 version = "1.0.0"
-description = "Pure-Python (standard library only) web application vulnerability scanner modelled on Wapiti"
+description = "Web application vulnerability scanner modelled on Wapiti. Credential storage uses the cryptography library."
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{name = "Pratham Brahmbhatt"}]
@@ -16,7 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-dependencies = []
+dependencies = ["cryptography>=42"]
 
 [project.scripts]
 pro-test = "protest.app.cli:main"

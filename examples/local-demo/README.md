@@ -6,7 +6,7 @@ This directory is a localhost fixture and the reports produced by pointing Pro-T
 
 ## Run it
 
-From the repository root, with Pro-Test installed in the active virtual environment (see the top-level README):
+After `pipx install` from the repository root (see the top-level README). No virtual environment needs to be activated:
 
 ```bash
 python examples/local-demo/server.py 8765
@@ -17,12 +17,15 @@ In another terminal:
 ```bash
 pro-test -u http://127.0.0.1:8765/ -m passive --profile quick --no-database \
   --store-session /tmp/protest-demo-sessions --flush-session \
+  --on-vulnerability continue \
   -f txt -o examples/local-demo/output/report.txt
 ```
 
+Without `--on-vulnerability continue`, a non-interactive shell stops at the first vulnerability and writes a shorter report. The checked-in files used `continue`.
+
 Other formats use the same command with `-f json`, `md`, `html`, `csv`, or `xml` and a matching `-o` file. Stop the server with Ctrl+C. Remove `/tmp/protest-demo-sessions` afterwards. That directory is a session database and is not part of the repository.
 
-The interactive menu was exercised against the same URL with choice `17` (passive), settings `2` (quick), and then `0` to exit. Menu option 7 (database extraction) was not used. The fixture is plain HTTP, so the default TLS check does not apply to it. The menu and scan screenshots match this passive run. `output/help.txt` and `screenshots/help.png` match `pro-test --help` after certificate verification was made the default.
+The interactive menu was exercised against the same URL with choice `P` (passive), settings `2` (quick crawl), and then `0` to exit. Choice 8 on the later menu (database extraction) was not used. The fixture is plain HTTP, so the default TLS check does not apply to it. `output/help.txt` and `screenshots/help.png` match `pro-test --help`. `screenshots/pause.png` is the stop/continue prompt on the first vulnerability.
 
 ## What the run printed
 

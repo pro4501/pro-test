@@ -7,8 +7,8 @@
  Created by Pratham Brahmbhatt.
  Only scan targets you own or are explicitly authorised to test.
 
-[*] Scan profile: quick (default modules, shallow crawl (depth 5, 30 links per page))
-[*] Crawling the target (press Ctrl+C to stop the crawl and start attacking)
+[*] Scan profile: quick (passive checks unless -m says otherwise, shallow crawl (depth 5, 30 links per page))
+[*] Crawling the target (Ctrl+C stops and keeps what was collected)
 [Low] X-Frame-Options is not set on http://127.0.0.1:8765/
 [Low] X-Content-Type-Options is not set on http://127.0.0.1:8765/
 [Low] HttpOnly flag is not set on the cookie 'demo_session' set at 'http://127.0.0.1:8765/'

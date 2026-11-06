@@ -4,7 +4,7 @@
 """Module registry, presets and the -m option parser (same syntax as Wapiti).
 
 Examples of -m values:
-    common                  default set
+    common                  explicit active set (not the default)
     all                     every module
     passive                 only passive modules
     xss,sql                 only these two
@@ -51,7 +51,7 @@ PRESETS = {
 def resolve_module_settings(module_options: Optional[str]) -> Dict[str, Set[str]]:
     """Return {module_name: {"GET", "POST"} subset} from a -m option value."""
     if module_options is None:
-        module_options = "common"
+        module_options = "passive"
     elif module_options.strip() == "":
         return {}
 

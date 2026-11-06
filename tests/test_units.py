@@ -120,7 +120,8 @@ class ScopeAndModulesTest(unittest.TestCase):
         self.assertFalse(Scope(base, "url").check("http://www.ex.com/app/index.php?x=1"))
 
     def test_module_option_syntax(self):
-        self.assertIn("xss", resolve_module_settings(None))
+        self.assertNotIn("xss", resolve_module_settings(None))
+        self.assertIn("http_headers", resolve_module_settings(None))
         self.assertEqual(resolve_module_settings(""), {})
         settings = resolve_module_settings("common,-xss,sql:get")
         self.assertNotIn("xss", settings)

@@ -7,12 +7,11 @@ Step 1: target URL (checked for reachability, permission confirmed once per URL)
 Step 2: attack(s) to perform, then the scan settings (Standard / Quick / Custom)
 Step 3: the scan runs and the weaknesses found are listed (compact, one proof line each)
 
-Then the "What next?" menu:
-    Results     1 details of a weakness, 2 live test (re-run an attack and check the proof again),
-                3 save a report, 6 full list including server errors / information
-    Next scan   4 another attack on the same URL, 5 a new URL
-    Data        8 scan history, tested parameters and stored credentials
-    (7 is the separate database-extraction step)
+Then the "What next?" menu, in order:
+    1 details, 2 live retest, 3 save report, 4 full list,
+    5 another attack on the same URL, 6 a new URL, 7 history,
+    8 database extraction (last, because it reads data), 0 exit.
+    Enter on a sub-prompt goes back. Enter on this menu does not exit.
 
 Launch with:  python -m protest          (no arguments)
          or:  python -m protest --menu
@@ -28,6 +27,7 @@ from urllib.parse import urlsplit
 from protest import NAME, VERSION
 from protest.core import log
 from protest.app.cli import BANNER, DATA_DIR, REPORT_DIR, build_parser, run, session_file
+from protest.core.paths import ensure_private_dir, tighten_file
 from protest.core.definitions import CONFIDENCE_ORDER, LEVEL_NAMES, SQL_DATA_EXTRACTION
 from protest.net.client import ClientConfiguration, HttpClient, InvalidURL, RequestError
 from protest.net.request import Request
@@ -43,6 +43,7 @@ MENU_SESSION_DIR = os.path.join(DATA_DIR, "menu_sessions")
 
 # (label, modules passed to -m). The numbers shown in Step 2 follow this order.
 ATTACKS: List[Tuple[str, str]] = [
+    ("Security Headers, Cookies and Info Leaks (passive)", "passive"),
     ("SQL Injection (error, boolean and time based)", "sql,timesql"),
     ("Cross-Site Scripting (reflected and stored)", "xss,permanentxss"),
     ("Command Execution (incl. Shellshock)", "exec,shellshock"),
@@ -59,19 +60,19 @@ ATTACKS: List[Tuple[str, str]] = [
     ("Dangerous HTTP Methods", "methods"),
     ("Technology Fingerprinting", "wapp"),
     ("TLS/SSL Configuration", "ssl"),
-    ("Security Headers, Cookies and Info Leaks (passive)", "passive"),
     ("Broken Access Control / IDOR (needs two test accounts)", "access_control"),
 ]
 # How Step 2 groups the numbered attacks above (group title, attack numbers)
 ATTACK_GROUPS = [
-    ("Injection", [1, 3, 4, 6, 7, 8]),
-    ("Browser-side", [2, 5, 9]),
-    ("Authentication & access", [10, 18, 13]),
-    ("Discovery & configuration", [11, 12, 14, 15, 16]),
-    ("Passive (no attack traffic)", [17]),
+    ("Passive checks", [1]),
+    ("Injection", [2, 3, 4, 5, 6, 7, 8, 9]),
+    ("Forms and access", [10, 11, 18]),
+    ("Files and discovery", [12, 13, 14, 15]),
+    ("Fingerprinting", [16, 17]),
 ]
 PRESETS = {
-    "A": ("Quick scan (recommended default modules)", "common"),
+    "P": ("Passive checks (recommended starting point)", "passive"),
+    "A": ("Active common set (sends attack traffic)", "common"),
     "F": ("Full scan (every module, slow)", "all"),
 }
 
@@ -164,9 +165,9 @@ def step_url(session: dict) -> str:
 
 def confirm_authorisation(url: str) -> bool:
     print()
-    print(color("  WARNING: active checks send real test traffic to the target.", "orange"))
+    print(color("  WARNING: attack choices send test traffic. Passive checks only read responses.", "orange"))
     print("  The default scope stays on this host. Database extraction stays off until you choose it")
-    print("  (menu option 7, or --exploit on the command line).")
+    print("  on the later menu (the last choice), or pass --exploit on the command line.")
     answer = ask(f"  Do you own {urlsplit(url).netloc} or have written permission to test it? (yes/no)", "no")
     return answer.lower() in ("y", "yes")
 
@@ -184,7 +185,7 @@ def step_attacks() -> Tuple[str, str]:
     print()
     print("  Pick one number, several separated by commas (e.g. 1,2,4), or a letter.")
     while True:
-        choice = ask("Your choice", "A").upper().replace(" ", "")
+        choice = ask("Your choice", "P").upper().replace(" ", "")
         if choice in PRESETS:
             return PRESETS[choice]
         try:
@@ -195,12 +196,12 @@ def step_attacks() -> Tuple[str, str]:
             labels = [ATTACKS[n - 1][0] for n in numbers]
             modules = ",".join(ATTACKS[n - 1][1] for n in numbers)
             return ", ".join(labels), modules
-        print(color(f"  Invalid choice. Enter numbers between 1 and {len(ATTACKS)}, or A / F.", "red"))
+        print(color(f"  Invalid choice. Enter numbers between 1 and {len(ATTACKS)}, or P / A / F.", "red"))
 
 
 SETTINGS_CHOICES = [
     ("standard", "Standard", "full crawl (depth 40), all selected attacks"),
-    ("quick", "Quick", "shallow crawl (depth 5), fastest results"),
+    ("quick", "Quick crawl", "shallow crawl (depth 5). This does not choose attack modules."),
     ("custom", "Custom", "choose scope, depth, timeout, threads, attack level, rate limit, cookie"),
 ]
 
@@ -222,8 +223,9 @@ def step_settings(session: dict) -> dict:
     if selected != "custom":
         settings["profile"] = selected
         return settings
-    print("  Scope on the target host: url | page | folder | subdomain")
-    print("  Off-host, explicit only: domain (other names on the registered domain) | punk (any website)")
+    print("  Scope on this origin: url | page | folder | host")
+    print("  subdomain is accepted and means host (same hostname and port).")
+    print("  Off-host, explicit only: domain (curated suffix list) | punk (any http/https URL)")
     settings["scope"] = ask("  Scope", settings["scope"])
     if settings["scope"] in ("domain", "punk"):
         print(color("  That scope leaves the target host. Continue only for names you are authorised to test.",
@@ -261,8 +263,9 @@ def step_identities(url: str) -> dict:
 
 # ---------------------------------------------------------------------- step 3: scan + results
 def run_scan(url: str, modules: str, settings: dict) -> Tuple[int, str]:
-    title("Scanning... (press Ctrl+C to stop crawling and start attacking)")
+    title("Scanning... (Ctrl+C stops and keeps what was collected)")
     argv = ["-u", url, "-m", modules, "--scope", settings["scope"], "-d", settings["depth"],
+            "--on-vulnerability", "ask",
             "-t", settings["timeout"], "--tasks", settings["tasks"], "-l", settings["level"],
             "--profile", settings.get("profile", "standard"), "--max-rps", settings.get("max_rps", "0"),
             "--verify-ssl", "1" if settings.get("verify_ssl", True) else "0",
@@ -371,7 +374,9 @@ def show_detail(findings: List[StoredFinding]):
     if not findings:
         print("  Nothing to show.")
         return
-    choice = ask(f"  Weakness number (1-{len(findings)})")
+    choice = ask(f"  Weakness number (1-{len(findings)}, Enter = back)")
+    if not choice:
+        return
     if not choice.isdigit() or not 1 <= int(choice) <= len(findings):
         print(color("  Invalid number.", "red"))
         return
@@ -443,7 +448,7 @@ def live_test(findings: List[StoredFinding], settings: dict, db_file: str):
     title("Live test - re-run an attack and check the proof again")
     print("  Pro-Test re-sends the attack next to a normal request. Use it to show a weakness live, or to")
     print("  confirm a fix after the developers patched it.")
-    choice = ask(f"  Weakness number (1-{len(findings)}), 'a' = all weaknesses, Enter = back", "a")
+    choice = ask(f"  Weakness number (1-{len(findings)}), 'a' = all weaknesses, Enter = back")
     choice = choice.strip().lower()
     if not choice:
         return
@@ -501,7 +506,7 @@ def step_exploit(findings: List[StoredFinding], settings: dict, db_file: str, ch
     targets = sql_injections(findings)
     if not targets:
         print("  No SQL injection was confirmed for this target, so there is nothing to exploit.")
-        print("  Run the 'SQL Injection' attack first (option 4, then attack 1 or 'a' for all).")
+        print("  Run the SQL Injection choice in step 2 first.")
         return
     done = {(finding.request.url if finding.request else "", finding.parameter)
             for finding in findings if finding.category == SQL_DATA_EXTRACTION.name}
@@ -520,7 +525,9 @@ def step_exploit(findings: List[StoredFinding], settings: dict, db_file: str, ch
         for index, finding in enumerate(todo, start=1):
             label = f"{finding.category}{' [' + finding.parameter + ']' if finding.parameter else ''}"
             print(f"  {index:>3}. {label:<45} {finding.request.path if finding.request else ''}")
-        choice = ask(f"  Weakness number to exploit (1-{len(todo)}), 'a' = all, Enter = skip", "a")
+        choice = ask(f"  Weakness number to exploit (1-{len(todo)}), 'a' = all, Enter = back")
+        if not choice.strip():
+            return
         technique = ask("  Technique (auto, union, blind, time)", "auto").lower()
     if technique not in ("auto", "union", "blind", "time"):
         print(color(f"  Unknown technique '{technique}', using auto.", "yellow"))
@@ -559,10 +566,11 @@ def step_exploit(findings: List[StoredFinding], settings: dict, db_file: str, ch
         persister.close()
     if any(result.exploited for result in results):
         folder = os.path.join(DATA_DIR, "extracted")
-        os.makedirs(folder, exist_ok=True)
+        ensure_private_dir(folder)
         host = urlsplit(results[0].url).netloc.replace(":", "_") or "target"
         path = write_results(os.path.join(folder, f"extracted_{host}_{time.strftime('%m%d%Y_%H%M%S')}.json"),
                              results, results[0].url)
+        tighten_file(path)
         print(color(f"  Extracted data saved to {path}", "green"))
     print(f"  ({client.request_count} requests sent for the exploitation)")
 
@@ -580,6 +588,7 @@ def save_report(findings: List[StoredFinding], pages: int, url: str, scope: str)
         generator.add_finding(finding)
     path = resolve_output_path(output or None, fmt, urlsplit(url).netloc, REPORT_DIR)
     generator.generate(path)
+    tighten_file(path)
     print(color(f"  Report saved to {path}", "green"))
 
 
@@ -659,26 +668,26 @@ def menu_main() -> int:
             if wants_access:
                 settings["identities"] = step_identities(url)
             code, db_file = run_scan(url, modules, settings)
-            if code != 0:
+            if code == 130:
+                print(color("  Stopped. Collected findings were kept.", "yellow"))
+            elif code != 0:
                 print(color(f"  The scan stopped with an error (code {code}).", "red"))
             findings, pages = load_findings(db_file) if os.path.exists(db_file) else ([], 0)
             show_findings(findings, pages, attack_label)
 
             while True:
                 title("What next?")
-                print(color("  Results", "bold"))
                 print("    1) Details of a weakness (evidence, fix, request to reproduce)")
-                print("    2) Live test: re-run an attack and check the proof again")
+                print("    2) Live retest: send the stored check again")
                 print("    3) Save a report (html, json, txt, csv, md, xml)")
-                print("    6) Full list again, including server errors and information")
-                print("    7) Exploit a weakness (Step 5): read the database behind a SQL injection")
-                print(color("  Next scan", "bold"))
-                print("    4) Another attack on the same URL")
-                print("    5) Scan a new URL")
-                print(color("  Data", "bold"))
-                print("    8) Scan history, tested parameters & stored credentials")
+                print("    4) Full list again, including server errors and information")
+                print("    5) Another attack on the same URL")
+                print("    6) Scan a new URL")
+                print("    7) Scan history, tested parameters and stored credentials")
+                print("    8) Try database extraction on a confirmed finding (sensitive)")
                 print("    0) Exit")
-                action = ask("Your choice", "0")
+                print("    Enter does not exit. Type 0 to leave.")
+                action = ask("Your choice")
                 if action == "1":
                     show_detail(findings)
                 elif action == "2":
@@ -686,16 +695,16 @@ def menu_main() -> int:
                 elif action == "3":
                     save_report(findings, pages, url, settings["scope"])
                 elif action == "4":
-                    break
+                    show_findings(findings, pages, attack_label, full=True)
                 elif action == "5":
-                    url = step_url(session)
                     break
                 elif action == "6":
-                    show_findings(findings, pages, attack_label, full=True)
+                    url = step_url(session)
+                    break
                 elif action == "7":
-                    step_exploit(findings, settings, db_file)
-                elif action == "8":
                     show_history()
+                elif action == "8":
+                    step_exploit(findings, settings, db_file)
                 elif action == "0":
                     print("Goodbye.")
                     return 0

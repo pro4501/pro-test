@@ -102,13 +102,15 @@ class Response:
     def is_server_error(self) -> bool:
         return 500 <= self.status < 600
 
-    def to_dict(self, max_body: int = 20000) -> dict:
+    def to_dict(self, max_body: int = 20000, store_body: bool = True) -> dict:
+        from protest.core.redact import redact_pairs  # pylint: disable=import-outside-toplevel
         return {
             "url": self.url,
             "status": self.status,
-            "headers": self.headers.items(),
-            "body": self.content[:max_body],
+            "headers": redact_pairs(self.headers.items()),
+            "body": self.content[:max_body] if store_body else "",
             "elapsed": self.elapsed,
+            "body_omitted": not store_body,
         }
 
     @classmethod
@@ -121,8 +123,8 @@ class Response:
             data.get("elapsed", 0.0),
         )
 
-    def to_json(self, max_body: int = 20000) -> str:
-        return json.dumps(self.to_dict(max_body))
+    def to_json(self, max_body: int = 20000, store_body: bool = True) -> str:
+        return json.dumps(self.to_dict(max_body, store_body=store_body))
 
     def __repr__(self) -> str:
         return f"<Response {self.status} {self.url}>"

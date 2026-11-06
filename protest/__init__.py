@@ -1,7 +1,11 @@
 # Copyright (C) Pratham Brahmbhatt
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
-"""Pro-Test - a pure-Python (standard library only) web application vulnerability scanner.
+"""Pro-Test - a web application vulnerability scanner.
+
+The HTTP client, crawler and report writers use the Python standard library.
+Stored credentials use the cryptography package (Fernet). Omitting -m runs
+passive checks only. Active modules stay available when you name them.
 
 Pro-Test follows the architecture of the Wapiti scanner (https://wapiti-scanner.github.io).
 It is not a vendored copy of Wapiti. Some detection data and some source lines follow

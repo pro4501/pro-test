@@ -1,11 +1,13 @@
 # Copyright (C) Pratham Brahmbhatt
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
-"""Thread-safe HTTP client built on urllib (standard library only).
+"""Thread-safe HTTP client built on urllib.
 
 KEY DESIGN DECISIONS
     * Redirects are NOT followed automatically (_NoRedirect): the crawler and the modules must see
-      the 3xx answer itself, e.g. open-redirect detection reads its Location header.
+      the 3xx answer itself, e.g. open-redirect detection reads its Location header. Login is the
+      caller that sets follow_redirects. Those hops stay on http/https and inside the scan scope,
+      and Cookie / Authorization are not attached to a different origin.
     * HTTP errors are normal answers: urllib raises HTTPError for 4xx/5xx, we turn it back into a
       Response because a 500 or 403 is information for the scanner, not a failure.
     * One urllib "opener" per thread (threading.local) because openers are not documented as
@@ -26,10 +28,12 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
+from urllib.parse import urlsplit
 from typing import Optional
 
 from protest.net.request import Request
 from protest.net.response import Headers, Response
+from protest.net.scope import origin_key
 
 DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0"
 MAX_BODY_SIZE = 2 * 1024 * 1024
@@ -107,6 +111,43 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
+class _OriginBasicAuth(urllib.request.HTTPBasicAuthHandler):
+    """Send Basic credentials only to one origin prefix (scheme://host:port/)."""
+
+    def __init__(self, password_mgr, prefix: str):
+        super().__init__(password_mgr)
+        self._prefix = prefix
+
+    def http_request(self, req):
+        if not str(req.full_url).startswith(self._prefix):
+            return req
+        return super().http_request(req)
+
+    https_request = http_request
+
+    def http_error_401(self, req, fp, code, msg, headers):  # pylint: disable=too-many-arguments
+        if not str(req.full_url).startswith(self._prefix):
+            return None
+        return super().http_error_401(req, fp, code, msg, headers)
+
+    https_error_401 = http_error_401
+
+
+class _OriginDigestAuth(urllib.request.HTTPDigestAuthHandler):
+    """Answer a Digest challenge only for one origin prefix."""
+
+    def __init__(self, password_mgr, prefix: str):
+        super().__init__(password_mgr)
+        self._prefix = prefix
+
+    def http_error_401(self, req, fp, code, msg, headers):  # pylint: disable=too-many-arguments
+        if not str(req.full_url).startswith(self._prefix):
+            return None
+        return super().http_error_401(req, fp, code, msg, headers)
+
+    https_error_401 = http_error_401
+
+
 class HttpClient:
     def __init__(self, config: ClientConfiguration):
         self.config = config
@@ -115,6 +156,9 @@ class HttpClient:
         self.throttled_count = 0
         self._count_lock = threading.Lock()
         self.limiter = RateLimiter(config.max_rps, config.delay)
+        self.control = None
+        self.scope = None
+        self.bound_origin = None
 
     # ------------------------------------------------------------------ opener
     def _build_opener(self) -> urllib.request.OpenerDirector:
@@ -134,14 +178,16 @@ class HttpClient:
             handlers.append(urllib.request.HTTPCookieProcessor(self.config.cookies))
 
         cred = self.config.credential
-        if cred:
+        if cred and self.bound_origin is not None:
+            prefix = f"{self.bound_origin.scheme}://{self.bound_origin.netloc}/"
             manager = urllib.request.HTTPPasswordMgrWithPriorAuth()
-            manager.add_password(None, "http://", cred.username, cred.password, is_authenticated=True)
-            manager.add_password(None, "https://", cred.username, cred.password, is_authenticated=True)
+            # Trailing slash so urllib treats this as the origin, not a prefix of every http URL.
+            prior = cred.method != "digest"
+            manager.add_password(None, prefix, cred.username, cred.password, is_authenticated=prior)
             if cred.method == "digest":
-                handlers.append(urllib.request.HTTPDigestAuthHandler(manager))
+                handlers.append(_OriginDigestAuth(manager, prefix))
             else:
-                handlers.append(urllib.request.HTTPBasicAuthHandler(manager))
+                handlers.append(_OriginBasicAuth(manager, prefix))
         return urllib.request.build_opener(*handlers)
 
     @property
@@ -155,12 +201,38 @@ class HttpClient:
     # ------------------------------------------------------------------ sending
     def send(self, request: Request, timeout: Optional[float] = None, headers: Optional[dict] = None,
              follow_redirects: bool = False, max_redirects: int = 5) -> Response:
+        self._require_web_url(request.url)
         response = self._send_throttled(request, timeout, headers)
         redirects = 0
         while follow_redirects and response.is_redirect and redirects < max_redirects:
+            target = response.redirection_url
+            if not self._may_follow(target):
+                from protest.core import log  # pylint: disable=import-outside-toplevel
+                log.warning(f"[!] Not following redirect to {target}")
+                break
             redirects += 1
-            response = self._send_throttled(Request(response.redirection_url), timeout, headers)
+            response = self._send_throttled(Request(target), timeout, headers)
         return response
+
+    @staticmethod
+    def _require_web_url(url: str) -> None:
+        parts = urlsplit(url)
+        if parts.scheme not in ("http", "https") or not parts.netloc:
+            raise InvalidURL(f"Unsupported URL scheme: {parts.scheme or '(none)'}")
+
+    def _may_follow(self, url: str) -> bool:
+        try:
+            self._require_web_url(url)
+        except InvalidURL:
+            return False
+        if self.scope is not None and not self.scope.check(url):
+            return False
+        return True
+
+    def _same_origin(self, url: str) -> bool:
+        if self.bound_origin is None:
+            return True
+        return origin_key(url) == origin_key(self.bound_origin.url)
 
     def _send_throttled(self, request: Request, timeout: Optional[float], headers: Optional[dict],
                         max_retries: int = 2) -> Response:
@@ -182,6 +254,9 @@ class HttpClient:
         return response
 
     def _send_once(self, request: Request, timeout: Optional[float], extra_headers: Optional[dict]) -> Response:
+        if self.control is not None:
+            self.control.before_request()
+        self._require_web_url(request.url)
         body, content_type = request.build_body()
         try:
             req = urllib.request.Request(request.url, data=body, method=request.method)
@@ -195,7 +270,11 @@ class HttpClient:
             req.add_header("Content-Type", content_type)
         if request.referer:
             req.add_header("Referer", request.referer)
-        for key, value in {**self.config.headers, **request.headers, **(extra_headers or {})}.items():
+        merged = {**self.config.headers, **request.headers, **(extra_headers or {})}
+        if not self._same_origin(request.url):
+            from protest.core.redact import is_secret_header  # pylint: disable=import-outside-toplevel
+            merged = {key: value for key, value in merged.items() if not is_secret_header(key)}
+        for key, value in merged.items():
             req.add_header(key, value)
 
         with self._count_lock:

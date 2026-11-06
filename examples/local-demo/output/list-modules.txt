@@ -20,37 +20,37 @@
 	buster
 		Brute forces common file and directory names to find unlinked resources.
 
-	cookieflags (used by default, passive)
+	cookieflags (passive, used when -m is omitted)
 		Checks HttpOnly and Secure flags of cookies set by the application.
 
 	crlf
 		Detects Carriage Return Line Feed (CRLF) injection in HTTP response headers.
 
-	csp (used by default, passive)
+	csp (passive, used when -m is omitted)
 		Evaluates the Content-Security-Policy header (missing policy or unsafe directives).
 
 	csrf
 		Detects forms that are not protected by a verified anti-CSRF token.
 
-	exec (used by default)
+	exec (in the common set, not the default)
 		Detects scripts vulnerable to command and/or code execution.
 
-	file (used by default)
+	file (in the common set, not the default)
 		Detects file-related vulnerabilities such as directory traversal and include() vulnerabilities.
 
 	htaccess
 		Attempts to bypass access controls on 401/403 resources by using a custom HTTP method.
 
-	http_headers (used by default, passive)
+	http_headers (passive, used when -m is omitted)
 		Checks the presence and values of security headers (X-Frame-Options, X-Content-Type-Options, HSTS).
 
-	https_redirect (used by default, passive)
+	https_redirect (passive, used when -m is omitted)
 		Checks that sensitive HTTP traffic is redirected to HTTPS.
 
-	inconsistent_redirection (used by default, passive)
+	inconsistent_redirection (passive, used when -m is omitted)
 		Detects 3xx redirections that still return a full HTML body with links or forms.
 
-	information_disclosure (used by default, passive)
+	information_disclosure (passive, used when -m is omitted)
 		Detects full file system paths of the server disclosed in responses.
 
 	ldap
@@ -59,34 +59,34 @@
 	methods
 		Detects uncommon HTTP methods (PUT, DELETE, TRACE...) allowed on a resource.
 
-	permanentxss (used by default)
+	permanentxss (in the common set, not the default)
 		Detects stored Cross-Site Scripting by looking for previously injected taints in every page.
 
-	redirect (used by default)
+	redirect (in the common set, not the default)
 		Detects Open Redirect vulnerabilities (HTTP, meta refresh and JavaScript redirections).
 
 	shellshock
 		Detects scripts vulnerable to the Shellshock bash bug (CVE-2014-6271).
 
-	sql (used by default)
+	sql (in the common set, not the default)
 		Detects SQL (and XPath) injection with error-based and boolean-based (blind) techniques.
 
-	ssl (used by default)
+	ssl (in the common set, not the default)
 		Evaluates the TLS configuration of HTTPS hosts (certificate validity, expiry, legacy protocols).
 
-	stacktrace_disclosure (used by default, passive)
+	stacktrace_disclosure (passive, used when -m is omitted)
 		Detects stack traces and debug pages disclosed in responses.
 
 	timesql
 		Detects blind SQL injection with time-based payloads (SLEEP, pg_sleep, WAITFOR DELAY...).
 
-	unsecure_password (used by default, passive)
+	unsecure_password (passive, used when -m is omitted)
 		Detects password fields submitted over unencrypted HTTP.
 
 	wapp
 		Identifies web technologies (servers, frameworks, CMS, JavaScript libraries) from headers and HTML.
 
-	xss (used by default)
+	xss (in the common set, not the default)
 		Detects reflected Cross-Site Scripting (and HTML injection) using context-aware payloads.
 
 	xxe

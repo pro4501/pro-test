@@ -63,10 +63,11 @@ grants GPL version 2 or any later version. Copyright lines and the comparison
 are in `NOTICE`. No Wapiti or sqlmap source tree is included here. Design
 notes in `docs/wapiti-analysis.md` are not a copy of Wapiti's code.
 
-Credential storage uses a home-grown HMAC construction in
-`protest/core/vault.py` because the standard library has no AES. The module's
-docstring says to prefer a reviewed implementation such as AES-GCM for
-production use. The key file next to the database decrypts the secrets.
+Credential storage uses Fernet from the `cryptography` package. The key file
+next to the database is still 32 random bytes; a Fernet key is derived from it.
+Tokens are prefixed `pt2:`. A `pt1:` token from the previous construction is
+not decrypted and is not deleted. The key file next to the database decrypts
+the new secrets.
 
 No backdoor, persistence mechanism, or phone-home request was found in the
 source. Form fields that the crawler fills used to default the email input to
