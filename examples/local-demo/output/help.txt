@@ -1,0 +1,155 @@
+usage: pro-test [-h] (-u URL | --list-modules) [--data DATA]
+                [--scope {url,page,folder,subdomain,domain,punk}]
+                [-m MODULES_LIST] [-l {1,2}] [-p PROXY_URL]
+                [--auth-user USERNAME] [--auth-password PASSWORD]
+                [--auth-method {basic,digest}] [--form-user USERNAME]
+                [--form-password PASSWORD] [--form-url URL] [--form-data DATA]
+                [--form-enctype ENCTYPE] [--compare-form-user USERNAME]
+                [--compare-form-password PASSWORD]
+                [--compare-cookie COOKIE_VALUE] [--identity-marker TEXT]
+                [-c COOKIE_FILE] [-C COOKIE_VALUE] [--jwt JWT]
+                [--drop-set-cookie] [--skip-crawl] [--resume-crawl]
+                [--flush-attacks] [--flush-session] [--store-session PATH]
+                [--database PATH] [--no-database] [-s URL] [-x URL]
+                [-r PARAMETER] [--skip PARAMETER] [-d DEPTH]
+                [--max-links-per-page MAX] [--max-files-per-dir MAX]
+                [--max-scan-time SECONDS] [--max-attack-time SECONDS]
+                [--max-parameters MAX]
+                [-S {paranoid,sneaky,polite,normal,aggressive,insane}]
+                [--tasks TASKS] [--profile {standard,quick}] [--max-rps N]
+                [--delay SECONDS] [--no-auto-throttle] [-t SECONDS]
+                [-H HEADER] [-A AGENT] [--verify-ssl {0,1}] [--color]
+                [-v {0,1,2}] [--log OUTPUT_PATH]
+                [-f {csv,html,json,md,txt,xml}] [-o OUTPUT_PATH] [-dr {1,2}]
+                [--exploit] [--exploit-technique {auto,union,blind,time}]
+                [--exploit-max-requests N] [--exploit-max-rows N]
+                [--exploit-output OUTPUT_PATH] [--version]
+
+Pro-Test 1.0.0: web application vulnerability scanner (pure Python)
+
+options:
+  -h, --help            show this help message and exit
+  -u URL, --url URL     The base URL used to define the scan scope (default
+                        scope is folder)
+  --list-modules        List attack modules and exit
+  --data DATA           Urlencoded data to send with the base URL (POST
+                        request)
+  --scope {url,page,folder,subdomain,domain,punk}
+                        Set scan scope
+  -m MODULES_LIST, --module MODULES_LIST
+                        List of modules to load (e.g. 'common', 'all',
+                        'passive', 'xss,sql', 'common,-xss', 'all,sql:get').
+                        An empty string means crawl only.
+  -l {1,2}, --level {1,2}
+                        Set attack level (2 also injects in the raw query
+                        string)
+  -p PROXY_URL, --proxy PROXY_URL
+                        HTTP(S) proxy to use (http://host:port/)
+  --auth-user USERNAME  HTTP authentication username
+  --auth-password PASSWORD
+                        HTTP authentication password
+  --auth-method {basic,digest}
+                        HTTP authentication method
+  --form-user USERNAME  Login form username
+  --form-password PASSWORD
+                        Login form password
+  --form-url URL        Login form URL
+  --form-data DATA      Raw POST data to send to --form-url to log in
+  --form-enctype ENCTYPE
+                        Enctype used with --form-data
+  --compare-form-user USERNAME
+                        access_control: second test account (user B), logged
+                        in through --form-url
+  --compare-form-password PASSWORD
+                        access_control: password of user B
+  --compare-cookie COOKIE_VALUE
+                        access_control: Cookie header of user B's session
+                        (instead of a login)
+  --identity-marker TEXT
+                        access_control: text that identifies user A's data
+                        (full name, student number, e-mail...). The --form-
+                        user name is always used. Repeatable.
+  -c COOKIE_FILE, --cookie COOKIE_FILE
+                        JSON cookie file to load
+  -C COOKIE_VALUE, --cookie-value COOKIE_VALUE
+                        Cookie header value to send with every request
+                        (name=value; name2=value2)
+  --jwt JWT             JWT sent as 'Authorization: Bearer' with every request
+  --drop-set-cookie     Ignore Set-Cookie headers from responses
+  --skip-crawl          Don't crawl, attack URLs saved during a previous
+                        session
+  --resume-crawl        Resume the crawl even if some attacks were previously
+                        performed
+  --flush-attacks       Flush attack history and findings for the current
+                        session
+  --flush-session       Flush everything previously found for this target
+                        (crawl, findings...)
+  --store-session PATH  Directory where session databases are stored
+  --database PATH       Central database recording every scan, inputs,
+                        findings and (encrypted) credentials (default
+                        ~/.pro-test/protest.db)
+  --no-database         Don't record this scan in the central database
+  -s URL, --start URL   Add a URL (or a file containing URLs) to start the
+                        scan with
+  -x URL, --exclude URL
+                        URL to exclude from the scan (wildcards '*' allowed)
+  -r PARAMETER, --remove PARAMETER
+                        Remove this parameter from URLs
+  --skip PARAMETER      Skip attacking the given parameter(s)
+  -d DEPTH, --depth DEPTH
+                        How deep the crawler explores the website
+  --max-links-per-page MAX
+                        Max in-scope links extracted from each page
+  --max-files-per-dir MAX
+                        Max pages explored per directory
+  --max-scan-time SECONDS
+                        Max duration of the crawl
+  --max-attack-time SECONDS
+                        Max duration of each attack module
+  --max-parameters MAX  URLs and forms having more than MAX input parameters
+                        are not attacked
+  -S {paranoid,sneaky,polite,normal,aggressive,insane}, --scan-force {paranoid,sneaky,polite,normal,aggressive,insane}
+                        Reduce/increase the number of similar URLs crawled and
+                        attacked
+  --tasks TASKS         Number of concurrent threads
+  --profile {standard,quick}
+                        Scan profile: standard = default modules and settings;
+                        quick = default modules, shallow crawl (depth 5, 30
+                        links per page)
+  --max-rps N           Maximum number of requests per second (0 = unlimited)
+  --delay SECONDS       Minimum pause between two requests
+  --no-auto-throttle    Don't slow down / retry when the server answers 429 or
+                        503
+  -t SECONDS, --timeout SECONDS
+                        Request timeout
+  -H HEADER, --header HEADER
+                        Custom header sent with every request ('Name: value')
+  -A AGENT, --user-agent AGENT
+                        Custom User-Agent
+  --verify-ssl {0,1}    Verify TLS certificates: 1 (default) checks them, 0
+                        skips the check. Use 0 only for a localhost lab whose
+                        certificate you created
+  --color               Colorize output
+  -v {0,1,2}, --verbose {0,1,2}
+                        Verbosity (0: quiet, 1: print attacked URLs, 2: print
+                        every request)
+  --log OUTPUT_PATH     Write a log file
+  -f {csv,html,json,md,txt,xml}, --format {csv,html,json,md,txt,xml}
+                        Report format
+  -o OUTPUT_PATH, --output OUTPUT_PATH
+                        Report file or directory
+  -dr {1,2}, --detailed-report {1,2}
+                        1: include crawled URLs, 2: also include HTTP
+                        responses of findings
+  --exploit             Step 5: after the scan, exploit the confirmed SQL
+                        injections to read the database (tables, columns,
+                        rows) and save everything as JSON
+  --exploit-technique {auto,union,blind,time}
+                        Extraction technique used by --exploit (default:
+                        union, then boolean blind, then time based)
+  --exploit-max-requests N
+                        Request budget for --exploit (default 400)
+  --exploit-max-rows N  Rows read per table by --exploit (default 25)
+  --exploit-output OUTPUT_PATH
+                        File or folder --exploit writes the extracted data to
+  --version             show program's version number and exit

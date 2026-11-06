@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Secrets and local environment
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Pro-Test runtime. Never commit scan history, keys, or session files.
+.pro-test/
+**/.pro-test/
+protest.db
+protest.key
+*.db
+*.sqlite
+*.sqlite3
+
+# Scan output written by a local run (sample reports under examples/ are intentional)
+scans/
+menu_sessions/
+generated_report/
+extracted/
+reports/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.zip

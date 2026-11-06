@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pro-test"
+version = "1.0.0"
+description = "Pure-Python (standard library only) web application vulnerability scanner modelled on Wapiti"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{name = "Pratham Brahmbhatt"}]
+license = "GPL-2.0-or-later"
+license-files = ["LICENSE", "NOTICE"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = []
+
+[project.scripts]
+pro-test = "protest.app.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["protest*"]

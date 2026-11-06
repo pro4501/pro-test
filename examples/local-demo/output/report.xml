@@ -1,0 +1,688 @@
+<?xml version='1.0' encoding='utf-8'?>
+<report type="security">
+  <report_infos>
+    <info name="target">http://127.0.0.1:8765/</info>
+    <info name="date">Fri, 06 Nov 2026 15:14:25 +0000</info>
+    <info name="version">Pro-Test 1.0.0</info>
+    <info name="scope">folder</info>
+    <info name="crawled_pages_nbr">3</info>
+  </report_infos>
+  <vulnerabilities>
+    <vulnerability name="SQL Injection">
+      <description>User input reaches a database query without proper neutralisation. An attacker can change the meaning of the query to read or modify data, bypass authentication and sometimes run commands on the database server. Blind variants give no error message but can still be detected through boolean or timing differences.</description>
+      <solution>Use parameterised queries (prepared statements) everywhere, never build SQL by concatenating user input, and run the application with a least-privileged database account.</solution>
+      <references>
+        <reference>
+          <title>OWASP: SQL Injection</title>
+          <url>https://owasp.org/www-community/attacks/SQL_Injection</url>
+        </reference>
+        <reference>
+          <title>CWE-89</title>
+          <url>https://cwe.mitre.org/data/definitions/89.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="Cross Site Scripting">
+      <description>The application reflects user input into a page without encoding it for the HTML context. An attacker can craft a link that executes JavaScript in a victim's browser, stealing sessions or performing actions as them.</description>
+      <solution>Encode output according to its context (HTML body, attribute, JavaScript, URL), validate input, and deploy a strict Content-Security-Policy as defence in depth.</solution>
+      <references>
+        <reference>
+          <title>OWASP: Cross Site Scripting</title>
+          <url>https://owasp.org/www-community/attacks/xss/</url>
+        </reference>
+        <reference>
+          <title>CWE-79</title>
+          <url>https://cwe.mitre.org/data/definitions/79.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="Stored Cross Site Scripting">
+      <description>Input submitted to the application is stored and later rendered without encoding on another page, so the injected script runs for every visitor of that page.</description>
+      <solution>Encode stored data when rendering it, validate input on submission and use a strict Content-Security-Policy.</solution>
+      <references>
+        <reference>
+          <title>OWASP: Stored XSS</title>
+          <url>https://owasp.org/www-community/attacks/xss/#stored-xss-attacks</url>
+        </reference>
+        <reference>
+          <title>CWE-79</title>
+          <url>https://cwe.mitre.org/data/definitions/79.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="HTML Injection">
+      <description>User input is inserted into the page as markup. Even without script execution an attacker can alter the page, inject fake forms or load external resources.</description>
+      <solution>Encode user-controlled data before inserting it in HTML.</solution>
+      <references>
+        <reference>
+          <title>OWASP: HTML Injection</title>
+          <url>https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/03-Testing_for_HTML_Injection</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="Stored HTML Injection">
+      <description>Submitted input is stored and later rendered as markup on another page.</description>
+      <solution>Encode stored data before rendering it in HTML.</solution>
+      <references>
+        <reference>
+          <title>OWASP: HTML Injection</title>
+          <url>https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/03-Testing_for_HTML_Injection</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="Command execution">
+      <description>User input reaches an operating-system command or a code evaluation function (eval, system, exec...). An attacker can run arbitrary commands with the privileges of the web server.</description>
+      <solution>Avoid calling shells or eval with user data. Use safe library APIs, strict allow-lists and argument arrays.</solution>
+      <references>
+        <reference>
+          <title>OWASP: Command Injection</title>
+          <url>https://owasp.org/www-community/attacks/Command_Injection</url>
+        </reference>
+        <reference>
+          <title>CWE-78</title>
+          <url>https://cwe.mitre.org/data/definitions/78.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="Path Traversal">
+      <description>User input is used to build a file path, letting an attacker read (or include) files outside the intended directory, such as system files or application source code.</description>
+      <solution>Map user choices to an allow-list of files, canonicalise paths and check they stay inside the base directory.</solution>
+      <references>
+        <reference>
+          <title>OWASP: Path Traversal</title>
+          <url>https://owasp.org/www-community/attacks/Path_Traversal</url>
+        </reference>
+        <reference>
+          <title>CWE-22</title>
+          <url>https://cwe.mitre.org/data/definitions/22.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="CRLF Injection">
+      <description>Carriage-return/line-feed characters from user input end up in HTTP response headers, allowing header injection, response splitting and cache poisoning.</description>
+      <solution>Strip or reject CR and LF characters from any value placed in a response header.</solution>
+      <references>
+        <reference>
+          <title>OWASP: CRLF Injection</title>
+          <url>https://owasp.org/www-community/vulnerabilities/CRLF_Injection</url>
+        </reference>
+        <reference>
+          <title>CWE-93</title>
+          <url>https://cwe.mitre.org/data/definitions/93.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="Open Redirect">
+      <description>The application redirects to a URL taken from user input, which phishing campaigns can abuse to send victims to malicious sites through a trusted domain.</description>
+      <solution>Only redirect to relative paths or to an allow-list of destinations.</solution>
+      <references>
+        <reference>
+          <title>OWASP: Unvalidated Redirects</title>
+          <url>https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html</url>
+        </reference>
+        <reference>
+          <title>CWE-601</title>
+          <url>https://cwe.mitre.org/data/definitions/601.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="Backup file">
+      <description>A copy of a script is reachable on the server (for example index.php.bak). Such files are served as plain text and can leak source code, credentials or business logic.</description>
+      <solution>Remove backup and temporary files from the web root and block such extensions at the server level.</solution>
+      <references>
+        <reference>
+          <title>OWASP: Old, backup and unreferenced files</title>
+          <url>https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/04-Review_Old_Backup_and_Unreferenced_Files_for_Sensitive_Information</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="Weak restriction bypass">
+      <description>An access restriction only applies to some HTTP methods. Requesting the resource with another (even invalid) method returns content that should be protected.</description>
+      <solution>Apply access control to every HTTP method, not only GET and POST.</solution>
+      <references>
+        <reference>
+          <title>CWE-650</title>
+          <url>https://cwe.mitre.org/data/definitions/650.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="Cross Site Request Forgery">
+      <description>A state-changing form is not protected by an unpredictable token that the server verifies, so another site can make a logged-in victim submit it.</description>
+      <solution>Add a per-session, unpredictable anti-CSRF token to every state-changing request, verify it on the server and set SameSite cookies.</solution>
+      <references>
+        <reference>
+          <title>OWASP: CSRF</title>
+          <url>https://owasp.org/www-community/attacks/csrf</url>
+        </reference>
+        <reference>
+          <title>CWE-352</title>
+          <url>https://cwe.mitre.org/data/definitions/352.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="Weak credentials">
+      <description>A login form accepted a common username/password combination.</description>
+      <solution>Enforce strong password policies, remove default accounts and add rate limiting / MFA to login forms.</solution>
+      <references>
+        <reference>
+          <title>CWE-521</title>
+          <url>https://cwe.mitre.org/data/definitions/521.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="Broken Access Control">
+      <description>A page that shows one user's private data is also served to another user, or to a visitor who is not logged in. The server checks that someone is logged in (or nothing at all) but not that the record belongs to them - an Insecure Direct Object Reference (IDOR) or missing authorization check. It is the #1 risk of the OWASP Top 10 (A01:2021).</description>
+      <solution>Enforce authorization on the server for every request: load the record AND check that it belongs to the logged-in user (or that the user's role allows it); deny by default; never rely on hidden links or unguessable IDs; require authentication on every non-public page.</solution>
+      <references>
+        <reference>
+          <title>OWASP Top 10 A01: Broken Access Control</title>
+          <url>https://owasp.org/Top10/A01_2021-Broken_Access_Control/</url>
+        </reference>
+        <reference>
+          <title>CWE-639: Authorization Bypass Through User-Controlled Key</title>
+          <url>https://cwe.mitre.org/data/definitions/639.html</url>
+        </reference>
+        <reference>
+          <title>CWE-862: Missing Authorization</title>
+          <url>https://cwe.mitre.org/data/definitions/862.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="XML External Entity">
+      <description>The XML parser resolves external entities supplied by the user, allowing local file disclosure, SSRF or denial of service.</description>
+      <solution>Disable DTD processing and external entity resolution in every XML parser.</solution>
+      <references>
+        <reference>
+          <title>OWASP: XXE</title>
+          <url>https://owasp.org/www-community/vulnerabilities/XML_External_Entity_(XXE)_Processing</url>
+        </reference>
+        <reference>
+          <title>CWE-611</title>
+          <url>https://cwe.mitre.org/data/definitions/611.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="LDAP Injection">
+      <description>User input is used inside an LDAP filter without escaping, letting an attacker alter directory queries.</description>
+      <solution>Escape LDAP special characters in user input and use framework APIs that build filters safely.</solution>
+      <references>
+        <reference>
+          <title>OWASP: LDAP Injection</title>
+          <url>https://owasp.org/www-community/attacks/LDAP_Injection</url>
+        </reference>
+        <reference>
+          <title>CWE-90</title>
+          <url>https://cwe.mitre.org/data/definitions/90.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="Cleartext Submission of Password">
+      <description>A password field is submitted over plain HTTP, exposing credentials to anyone on the network path.</description>
+      <solution>Serve login pages and their form targets exclusively over HTTPS.</solution>
+      <references>
+        <reference>
+          <title>CWE-319</title>
+          <url>https://cwe.mitre.org/data/definitions/319.html</url>
+        </reference>
+      </references>
+      <entries>
+        <entry>
+          <method>GET</method>
+          <path>/</path>
+          <url>http://127.0.0.1:8765/</url>
+          <level>3</level>
+          <severity>High</severity>
+          <confidence>Confirmed</confidence>
+          <parameter>password</parameter>
+          <payload />
+          <evidence>&lt;form method="POST" action="http://127.0.0.1:8765/login"&gt; contains &lt;input type="password" name="password"&gt;
+The form target uses http:// so the password travels unencrypted.</evidence>
+          <referer />
+          <module>unsecure_password</module>
+          <info>Password field 'password' is sent in clear text from URL http://127.0.0.1:8765/ to http://127.0.0.1:8765/login</info>
+          <http_request>GET / HTTP/1.1
+host: 127.0.0.1:8765</http_request>
+          <curl_command>curl "http://127.0.0.1:8765/"</curl_command>
+          <wstg>
+            <code>WSTG-CRYP-03</code>
+          </wstg>
+        </entry>
+      </entries>
+    </vulnerability>
+    <vulnerability name="Unencrypted Channels">
+      <description>Sensitive data (cookies, parameters) travels over plain HTTP or the site does not redirect HTTP to HTTPS.</description>
+      <solution>Redirect all HTTP traffic to HTTPS and enable HSTS.</solution>
+      <references>
+        <reference>
+          <title>CWE-319</title>
+          <url>https://cwe.mitre.org/data/definitions/319.html</url>
+        </reference>
+      </references>
+      <entries>
+        <entry>
+          <method>GET</method>
+          <path>/</path>
+          <url>http://127.0.0.1:8765/</url>
+          <level>2</level>
+          <severity>Medium</severity>
+          <confidence>Confirmed</confidence>
+          <parameter />
+          <payload />
+          <evidence>GET http://127.0.0.1:8765/ -&gt; HTTP 200
+Set-Cookie: demo_session=local-example; Path=/</evidence>
+          <referer />
+          <module>https_redirect</module>
+          <info>Sensitive data (cookie in the response) was sent over HTTP to http://127.0.0.1:8765/; the server did not enforce HTTPS</info>
+          <http_request>GET / HTTP/1.1
+host: 127.0.0.1:8765</http_request>
+          <curl_command>curl "http://127.0.0.1:8765/"</curl_command>
+          <wstg>
+            <code>WSTG-CRYP-03</code>
+          </wstg>
+        </entry>
+      </entries>
+    </vulnerability>
+    <vulnerability name="Clickjacking Protection">
+      <description>The page can be framed by any site, enabling clickjacking (UI redressing) attacks.</description>
+      <solution>Send 'X-Frame-Options: DENY' (or SAMEORIGIN) or a CSP 'frame-ancestors' directive.</solution>
+      <references>
+        <reference>
+          <title>OWASP: Clickjacking</title>
+          <url>https://owasp.org/www-community/attacks/Clickjacking</url>
+        </reference>
+      </references>
+      <entries>
+        <entry>
+          <method>GET</method>
+          <path>/</path>
+          <url>http://127.0.0.1:8765/</url>
+          <level>1</level>
+          <severity>Low</severity>
+          <confidence>Confirmed</confidence>
+          <parameter />
+          <payload />
+          <evidence>Headers received from http://127.0.0.1:8765/ (no X-Frame-Options):
+    Server: Pro-Test-Local-Demo Python/3.12.3
+    Date: Fri, 06 Nov 2026 15:14:25 GMT
+    Content-Type: text/html; charset=utf-8
+    Content-Length: 819
+    Cache-Control: no-store
+    Set-Cookie: demo_session=local-example; Path=/
+    Connection: close</evidence>
+          <referer />
+          <module>http_headers</module>
+          <info>X-Frame-Options is not set on http://127.0.0.1:8765/</info>
+          <http_request>GET / HTTP/1.1
+host: 127.0.0.1:8765</http_request>
+          <curl_command>curl "http://127.0.0.1:8765/"</curl_command>
+          <wstg>
+            <code>WSTG-CLNT-09</code>
+          </wstg>
+        </entry>
+      </entries>
+    </vulnerability>
+    <vulnerability name="MIME Type Confusion">
+      <description>Without 'X-Content-Type-Options: nosniff' browsers may guess the content type of a response and execute content that was not meant to be scripts or styles.</description>
+      <solution>Send 'X-Content-Type-Options: nosniff' on every response.</solution>
+      <references>
+        <reference>
+          <title>MDN: X-Content-Type-Options</title>
+          <url>https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options</url>
+        </reference>
+      </references>
+      <entries>
+        <entry>
+          <method>GET</method>
+          <path>/</path>
+          <url>http://127.0.0.1:8765/</url>
+          <level>1</level>
+          <severity>Low</severity>
+          <confidence>Confirmed</confidence>
+          <parameter />
+          <payload />
+          <evidence>Headers received from http://127.0.0.1:8765/ (no X-Content-Type-Options):
+    Server: Pro-Test-Local-Demo Python/3.12.3
+    Date: Fri, 06 Nov 2026 15:14:25 GMT
+    Content-Type: text/html; charset=utf-8
+    Content-Length: 819
+    Cache-Control: no-store
+    Set-Cookie: demo_session=local-example; Path=/
+    Connection: close</evidence>
+          <referer />
+          <module>http_headers</module>
+          <info>X-Content-Type-Options is not set on http://127.0.0.1:8765/</info>
+          <http_request>GET / HTTP/1.1
+host: 127.0.0.1:8765</http_request>
+          <curl_command>curl "http://127.0.0.1:8765/"</curl_command>
+          <wstg>
+            <code>WSTG-CONF-07</code>
+          </wstg>
+        </entry>
+      </entries>
+    </vulnerability>
+    <vulnerability name="HTTP Strict Transport Security (HSTS)">
+      <description>The HTTPS site does not send a valid Strict-Transport-Security header, so users can be downgraded to HTTP.</description>
+      <solution>Send 'Strict-Transport-Security: max-age=31536000; includeSubDomains' on HTTPS responses.</solution>
+      <references>
+        <reference>
+          <title>OWASP: HSTS</title>
+          <url>https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="HttpOnly Flag cookie">
+      <description>A cookie is readable from JavaScript because the HttpOnly flag is missing; an XSS can steal it.</description>
+      <solution>Set the HttpOnly flag on session and sensitive cookies.</solution>
+      <references>
+        <reference>
+          <title>OWASP: HttpOnly</title>
+          <url>https://owasp.org/www-community/HttpOnly</url>
+        </reference>
+      </references>
+      <entries>
+        <entry>
+          <method>GET</method>
+          <path>/</path>
+          <url>http://127.0.0.1:8765/</url>
+          <level>1</level>
+          <severity>Low</severity>
+          <confidence>Confirmed</confidence>
+          <parameter>demo_session</parameter>
+          <payload />
+          <evidence>Set-Cookie: demo_session=local-example; Path=/
+(no 'HttpOnly' attribute: JavaScript, and therefore an XSS, can read it)</evidence>
+          <referer />
+          <module>cookieflags</module>
+          <info>HttpOnly flag is not set on the cookie 'demo_session' set at 'http://127.0.0.1:8765/'</info>
+          <http_request>GET / HTTP/1.1
+host: 127.0.0.1:8765</http_request>
+          <curl_command>curl "http://127.0.0.1:8765/"</curl_command>
+          <wstg>
+            <code>WSTG-SESS-02</code>
+          </wstg>
+        </entry>
+      </entries>
+    </vulnerability>
+    <vulnerability name="Secure Flag cookie">
+      <description>A cookie can be sent over plain HTTP because the Secure flag is missing.</description>
+      <solution>Set the Secure flag on every cookie of an HTTPS application.</solution>
+      <references>
+        <reference>
+          <title>OWASP: Secure flag</title>
+          <url>https://owasp.org/www-community/controls/SecureCookieAttribute</url>
+        </reference>
+      </references>
+      <entries>
+        <entry>
+          <method>GET</method>
+          <path>/</path>
+          <url>http://127.0.0.1:8765/</url>
+          <level>1</level>
+          <severity>Low</severity>
+          <confidence>Confirmed</confidence>
+          <parameter>demo_session</parameter>
+          <payload />
+          <evidence>Set-Cookie: demo_session=local-example; Path=/
+(no 'Secure' attribute: the cookie is also sent over plain HTTP)</evidence>
+          <referer />
+          <module>cookieflags</module>
+          <info>Secure flag is not set on the cookie 'demo_session' set at 'http://127.0.0.1:8765/'</info>
+          <http_request>GET / HTTP/1.1
+host: 127.0.0.1:8765</http_request>
+          <curl_command>curl "http://127.0.0.1:8765/"</curl_command>
+          <wstg>
+            <code>WSTG-SESS-02</code>
+          </wstg>
+        </entry>
+      </entries>
+    </vulnerability>
+    <vulnerability name="Content Security Policy Configuration">
+      <description>The Content-Security-Policy header is missing or contains unsafe directives, weakening protection against XSS and data injection.</description>
+      <solution>Deploy a strict CSP without 'unsafe-inline'/'unsafe-eval' and with restrictive default-src/script-src.</solution>
+      <references>
+        <reference>
+          <title>OWASP: CSP Cheat Sheet</title>
+          <url>https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html</url>
+        </reference>
+      </references>
+      <entries>
+        <entry>
+          <method>GET</method>
+          <path>/</path>
+          <url>http://127.0.0.1:8765/</url>
+          <level>1</level>
+          <severity>Low</severity>
+          <confidence>Confirmed</confidence>
+          <parameter />
+          <payload />
+          <evidence>No Content-Security-Policy header in the response: injected scripts run without restriction</evidence>
+          <referer />
+          <module>csp</module>
+          <info>CSP is not set on http://127.0.0.1:8765/</info>
+          <http_request>GET / HTTP/1.1
+host: 127.0.0.1:8765</http_request>
+          <curl_command>curl "http://127.0.0.1:8765/"</curl_command>
+          <wstg>
+            <code>WSTG-CONF-12</code>
+          </wstg>
+        </entry>
+      </entries>
+    </vulnerability>
+    <vulnerability name="Information Disclosure - Full Path">
+      <description>Responses reveal absolute file system paths of the server, which helps attackers target other attacks.</description>
+      <solution>Disable verbose errors in production and avoid printing server paths.</solution>
+      <references>
+        <reference>
+          <title>CWE-209</title>
+          <url>https://cwe.mitre.org/data/definitions/209.html</url>
+        </reference>
+      </references>
+      <entries>
+        <entry>
+          <method>GET</method>
+          <path>/</path>
+          <url>http://127.0.0.1:8765/</url>
+          <level>1</level>
+          <severity>Low</severity>
+          <confidence>Confirmed</confidence>
+          <parameter />
+          <payload />
+          <evidence>...ds are discarded and are not shown back.
+Example server path, included on purpose so a passive check can see it:
+/var/www/local-demo/app/index.html
+Local demo debug page
+Username &lt;input nam...</evidence>
+          <referer />
+          <module>information_disclosure</module>
+          <info>Response of http://127.0.0.1:8765/ contains a server path: /var/www/local-demo/app/index.html</info>
+          <http_request>GET / HTTP/1.1
+host: 127.0.0.1:8765</http_request>
+          <curl_command>curl "http://127.0.0.1:8765/"</curl_command>
+          <wstg>
+            <code>WSTG-ERRH-01</code>
+          </wstg>
+        </entry>
+        <entry>
+          <method>GET</method>
+          <path>/debug</path>
+          <url>http://127.0.0.1:8765/debug</url>
+          <level>1</level>
+          <severity>Low</severity>
+          <confidence>Confirmed</confidence>
+          <parameter />
+          <payload />
+          <evidence>...a fake traceback written into this static page. Nothing raised it.
+Traceback (most recent call last):
+File "/var/www/local-demo/app/debug.py", line 12, in demo
+raise RuntimeError("local demo fixture")
+RuntimeError: local demo fixture...</evidence>
+          <referer>http://127.0.0.1:8765/</referer>
+          <module>information_disclosure</module>
+          <info>Response of http://127.0.0.1:8765/debug contains a server path: /var/www/local-demo/app/debug.py</info>
+          <http_request>GET /debug HTTP/1.1
+host: 127.0.0.1:8765
+referer: http://127.0.0.1:8765/</http_request>
+          <curl_command>curl "http://127.0.0.1:8765/debug" -e "http://127.0.0.1:8765/"</curl_command>
+          <wstg>
+            <code>WSTG-ERRH-01</code>
+          </wstg>
+        </entry>
+      </entries>
+    </vulnerability>
+    <vulnerability name="Stack Trace Disclosure">
+      <description>An error page displays a stack trace that reveals frameworks, versions and code structure.</description>
+      <solution>Use generic error pages in production and log details server-side only.</solution>
+      <references>
+        <reference>
+          <title>CWE-209</title>
+          <url>https://cwe.mitre.org/data/definitions/209.html</url>
+        </reference>
+      </references>
+      <entries>
+        <entry>
+          <method>GET</method>
+          <path>/debug</path>
+          <url>http://127.0.0.1:8765/debug</url>
+          <level>2</level>
+          <severity>Medium</severity>
+          <confidence>Confirmed</confidence>
+          <parameter />
+          <payload />
+          <evidence>Stack trace shown to visitors:
+    Traceback (most recent call last):
+    File "/var/www/local-demo/app/debug.py", line 12, in demo
+    raise RuntimeError("local demo fixture")
+    RuntimeError: local demo fixture
+    Back to the local demo home page</evidence>
+          <referer>http://127.0.0.1:8765/</referer>
+          <module>stacktrace_disclosure</module>
+          <info>Python stack trace / debug information disclosed on http://127.0.0.1:8765/debug</info>
+          <http_request>GET /debug HTTP/1.1
+host: 127.0.0.1:8765
+referer: http://127.0.0.1:8765/</http_request>
+          <curl_command>curl "http://127.0.0.1:8765/debug" -e "http://127.0.0.1:8765/"</curl_command>
+          <wstg>
+            <code>WSTG-ERRH-02</code>
+          </wstg>
+        </entry>
+      </entries>
+    </vulnerability>
+    <vulnerability name="Inconsistent Redirection">
+      <description>A 3xx redirection also contains a full HTML body with links or forms. Clients that ignore the redirect (scripts, attackers) still receive content that should have been protected.</description>
+      <solution>Return an empty body (or a minimal message) with redirections, especially for authentication redirects.</solution>
+      <references>
+        <reference>
+          <title>CWE-698</title>
+          <url>https://cwe.mitre.org/data/definitions/698.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+    <vulnerability name="TLS/SSL misconfigurations">
+      <description>The TLS configuration has weaknesses (expired or self-signed certificate, hostname mismatch, legacy protocol versions).</description>
+      <solution>Use a valid certificate from a trusted CA, renew it before expiry and only enable TLS 1.2/1.3.</solution>
+      <references>
+        <reference>
+          <title>OWASP: TLS Cheat Sheet</title>
+          <url>https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html</url>
+        </reference>
+      </references>
+      <entries />
+    </vulnerability>
+  </vulnerabilities>
+  <anomalies>
+    <anomaly name="Internal Server Error">
+      <description>A payload made the server answer with a 5xx status code. This often reveals unhandled input that may hide a real vulnerability.</description>
+      <solution>Handle invalid input gracefully and investigate the root cause of the error.</solution>
+      <references>
+        <reference>
+          <title>CWE-388</title>
+          <url>https://cwe.mitre.org/data/definitions/388.html</url>
+        </reference>
+      </references>
+      <entries />
+    </anomaly>
+    <anomaly name="Resource consumption">
+      <description>A payload made the server take longer than the timeout to answer, which may indicate a denial-of-service risk or a blind injection.</description>
+      <solution>Bound the processing time of requests and investigate why the payload slowed the server down.</solution>
+      <references>
+        <reference>
+          <title>CWE-400</title>
+          <url>https://cwe.mitre.org/data/definitions/400.html</url>
+        </reference>
+      </references>
+      <entries />
+    </anomaly>
+  </anomalies>
+  <additionals>
+    <additional name="HTTP Methods">
+      <description>Uncommon HTTP methods (PUT, DELETE, TRACE...) are enabled on this resource.</description>
+      <solution>Disable methods the application does not need.</solution>
+      <references>
+        <reference>
+          <title>OWASP: HTTP Methods</title>
+          <url>https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/06-Test_HTTP_Methods</url>
+        </reference>
+      </references>
+      <entries />
+    </additional>
+    <additional name="Fingerprint web technology">
+      <description>Technologies and versions used by the site were identified.</description>
+      <solution>Remove version banners where possible and keep every component up to date.</solution>
+      <references>
+        <reference>
+          <title>OWASP: Fingerprint Web Server</title>
+          <url>https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/02-Fingerprint_Web_Server</url>
+        </reference>
+      </references>
+      <entries />
+    </additional>
+    <additional name="Interesting files and directories">
+      <description>Unlinked files or directories were found by brute force. They may expose administration panels, data or configuration.</description>
+      <solution>Review the listed resources and remove or protect what should not be public.</solution>
+      <references>
+        <reference>
+          <title>OWASP: Unreferenced files</title>
+          <url>https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/04-Review_Old_Backup_and_Unreferenced_Files_for_Sensitive_Information</url>
+        </reference>
+      </references>
+      <entries />
+    </additional>
+    <additional name="SQL data extraction">
+      <description>A SQL injection was exploited, not just detected: the database structure (DBMS, tables, columns) and its rows were read back through the vulnerable parameter. Tables that look like accounts or secrets (users, logins, passwords) are dumped first, so the exact exposure - identifiers, user names, password hashes - is known instead of guessed.</description>
+      <solution>Use parameterised queries (prepared statements) for every query, give the application a least-privileged database account that cannot read tables it does not need, store passwords with a slow salted hash (bcrypt, argon2, PBKDF2) instead of a reversible or unsalted value, and rotate every credential the extraction exposed.</solution>
+      <references>
+        <reference>
+          <title>OWASP: SQL Injection</title>
+          <url>https://owasp.org/www-community/attacks/SQL_Injection</url>
+        </reference>
+        <reference>
+          <title>CWE-89</title>
+          <url>https://cwe.mitre.org/data/definitions/89.html</url>
+        </reference>
+        <reference>
+          <title>OWASP: Password Storage Cheat Sheet</title>
+          <url>https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html</url>
+        </reference>
+      </references>
+      <entries />
+    </additional>
+  </additionals>
+</report>
