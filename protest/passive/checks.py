@@ -13,6 +13,7 @@ from typing import Dict, Iterator, List, Optional, Tuple, Type
 from urllib.parse import urlsplit
 
 from protest.core import log
+from protest.core.control import ScanStopped
 from protest.core.definitions import (
     CLEARTEXT_PASSWORD, CLICKJACKING, CONFIRMED, CSP, HIGH_LEVEL, HSTS, HTTPONLY_COOKIE, INCONSISTENT_REDIRECTION,
     INFO_DISCLOSURE, LEVEL_NAMES, LOW_LEVEL, MEDIUM_LEVEL, MIME_SNIFFING, SECURE_COOKIE, STACKTRACE,
@@ -149,6 +150,35 @@ PATH_PATTERN = re.compile(
     r"|[A-Za-z]:\\(?:Program Files(?: \(x86\))?|Users|Windows|ProgramData|inetpub|xampp|wamp)[\\\w .()-]*"
     r")"
 )
+_ATTR_VALUE = re.compile(
+    r"""(?:href|src|action)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))""",
+    re.I,
+)
+
+
+def _link_paths(content: str):
+    """Paths written as href, src or action, plus the character spans of those values."""
+    paths = set()
+    spans = []
+    for match in _ATTR_VALUE.finditer(content):
+        value = match.group(1) or match.group(2) or match.group(3) or ""
+        start = content.find(value, match.start(), match.end())
+        if start >= 0:
+            spans.append((start, start + len(value)))
+        paths.add(value)
+        link_path = urlsplit(value).path
+        if link_path:
+            paths.add(link_path)
+    return paths, spans
+
+
+def path_is_navigation(content: str, match: re.Match, paths, spans) -> bool:
+    """True when the match is a link or form target rather than a leaked filesystem path."""
+    path = match.group().rstrip(".,) ")
+    start, end = match.span()
+    if any(left <= start and end <= right for left, right in spans):
+        return True
+    return path in paths
 
 
 class ModuleInformationDisclosure(PassiveModule):
@@ -171,8 +201,11 @@ class ModuleInformationDisclosure(PassiveModule):
     def analyze(self, request, response):
         if not any(t in response.type for t in ("text/html", "text/plain", "application/json")):
             return
+        paths, spans = _link_paths(response.content)
         for match in PATH_PATTERN.finditer(response.content):
             path = match.group().rstrip(".,) ")
+            if path_is_navigation(response.content, match, paths, spans):
+                continue
             if self._realistic(path) and self.should_report(path):
                 yield INFO_DISCLOSURE, LOW_LEVEL, f"Response of {request.url} contains a server path: {path}", "", \
                     excerpt(response.content, match.start(), match.end(), 120, strip_tags=True)
@@ -324,11 +357,14 @@ class PassiveScanner:
                 for result in module.analyze(request, response):
                     finding, level, info, parameter = result[:4]
                     evidence = result[4] if len(result) > 4 else ""
-                    # Passive findings are direct observations of the server's own response
+                    # Confirmed here means the header or text was present in this response.
+                    # It is not a claim that the issue was exploited.
                     self.persister.add_finding(finding.type, module.name, finding.name, level, request, parameter,
                                                info, finding.wstg, response, evidence=evidence,
                                                confidence=CONFIRMED)
                     color = log.log_red if level >= MEDIUM_LEVEL else log.log_orange
                     color(f"[{LEVEL_NAMES[level]}] {info}")
+            except ScanStopped:
+                raise
             except Exception as exception:  # pylint: disable=broad-except
                 log.error(f"[!] Passive module {module.name} failed on {request.url}: {exception!r}")

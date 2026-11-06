@@ -24,12 +24,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: State coverage limits
         run: |
-          echo "Command: python -m unittest tests.test_units tests.test_local_demo tests.test_cli_smoke tests.test_end_to_end"
+          echo "Command: python -m unittest tests.test_units tests.test_local_demo tests.test_cli_smoke tests.test_end_to_end tests.test_safety"
+          echo "MSc edition: cd msc-edition && python -m unittest tests.test_edition"
           echo "Known skips: university_site end-to-end and access-control tests. A skip is not a pass."
           echo "Not run: tests.test_exploit_step5.py (database extraction against an in-process stand-in)."
           echo "No live third-party targets."
       - name: Run release tests
-        run: python -m unittest tests.test_units tests.test_local_demo tests.test_cli_smoke tests.test_end_to_end -v
+        run: |
+          python -m unittest tests.test_units tests.test_local_demo tests.test_cli_smoke tests.test_end_to_end tests.test_safety -v
+          (cd msc-edition && python -m unittest tests.test_edition -v)
       - name: Build, install, and smoke the console script
         run: |
           python -m pip install --upgrade pip

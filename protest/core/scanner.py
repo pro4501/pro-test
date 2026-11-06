@@ -18,13 +18,13 @@ DESIGN NOTES
     * The ids of attacked resources are saved even when interrupted, so a later run with the same
       session skips them (resume support).
 """
-import sys
 import time
 import traceback
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from typing import Dict, List, Optional, Set
 
 from protest.core import log
+from protest.core.control import ScanStopped
 from protest.active.base import Attack, AttackCancelled
 from protest.active.registry import ACTIVE_MODULES
 from protest.net.client import HttpClient, InvalidURL, RequestError
@@ -44,6 +44,7 @@ class ActiveScanner:
         self.max_attack_time = max_attack_time
         self.tasks = max(1, tasks)
         self.user_choice = CONTINUE
+        self.aborted = False
 
     def init_modules(self) -> List[Attack]:
         modules = []
@@ -56,24 +57,6 @@ class ActiveScanner:
             module.do_post = module.do_post and "POST" in methods
             modules.append(module)
         return sorted(modules, key=lambda m: m.PRIORITY)
-
-    @staticmethod
-    def _ask_user() -> str:
-        if not sys.stdin or not sys.stdin.isatty():
-            return REPORT
-        print("\nAttack process was interrupted. Do you want to:")
-        print("\tr) stop everything here and generate the (R)eport")
-        print("\tn) move to the (N)ext attack module (if any)")
-        print("\tq) (Q)uit without generating the report")
-        print("\tc) (C)ontinue the current attack")
-        while True:
-            try:
-                choice = input("? ").strip().lower()
-            except (EOFError, KeyboardInterrupt):
-                return REPORT
-            if choice in (REPORT, NEXT, QUIT, CONTINUE):
-                return choice
-            print("Invalid choice. Valid choices are r, n, q and c.")
 
     def _resources(self, module: Attack):
         resources = []
@@ -91,6 +74,9 @@ class ActiveScanner:
                 log.normal(f"[+] {request}")
                 module.attack(request, response)
         except AttackCancelled:
+            return
+        except ScanStopped:
+            module.cancel_event.set()
             return
         except (RequestError, InvalidURL):
             time.sleep(1)
@@ -137,15 +123,21 @@ class ActiveScanner:
             # check the time limit and catch Ctrl+C (KeyboardInterrupt is always delivered to the
             # main thread in Python, never to the worker threads).
             while futures:
+                control = getattr(self.client, "control", None)
+                if control is not None and control.stopped:
+                    self.aborted = True
+                    self.user_choice = REPORT
+                    module.cancel_event.set()
+                    break
                 self._progress(module, position, total - len(futures), total, started)
                 try:
                     done, futures = wait(futures, timeout=0.5, return_when=FIRST_COMPLETED)
                 except KeyboardInterrupt:
-                    choice = self._ask_user()
-                    if choice != CONTINUE:
-                        self.user_choice = choice
-                        module.cancel_event.set()
-                    continue
+                    log.warning("[!] Interrupted. Stopping the attack and keeping what was collected.")
+                    self.aborted = True
+                    self.user_choice = REPORT
+                    module.cancel_event.set()
+                    break
                 if deadline and time.monotonic() > deadline and not module.cancel_event.is_set():
                     log.info(f"Max attack time was reached for module {module.name}, stopping.")
                     module.cancel_event.set()

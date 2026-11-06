@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pro-test-msc"
+version = "1.0.0"
+description = "Small educational edition: same-origin crawl and passive checks. Standard library only."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{name = "Pratham Brahmbhatt"}]
+license = "GPL-2.0-or-later"
+license-files = ["NOTICE.md"]
+dependencies = []
+
+[project.scripts]
+pro-test-msc = "protest_msc.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["protest_msc*"]

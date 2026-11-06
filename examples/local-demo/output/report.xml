@@ -2,7 +2,7 @@
 <report type="security">
   <report_infos>
     <info name="target">http://127.0.0.1:8765/</info>
-    <info name="date">Fri, 06 Nov 2026 15:14:25 +0000</info>
+    <info name="date">Fri, 06 Nov 2026 17:13:41 +0000</info>
     <info name="version">Pro-Test 1.0.0</info>
     <info name="scope">folder</info>
     <info name="crawled_pages_nbr">3</info>
@@ -285,7 +285,7 @@ host: 127.0.0.1:8765</http_request>
           <parameter />
           <payload />
           <evidence>GET http://127.0.0.1:8765/ -&gt; HTTP 200
-Set-Cookie: demo_session=local-example; Path=/</evidence>
+Set-Cookie: [redacted]</evidence>
           <referer />
           <module>https_redirect</module>
           <info>Sensitive data (cookie in the response) was sent over HTTP to http://127.0.0.1:8765/; the server did not enforce HTTPS</info>
@@ -319,11 +319,11 @@ host: 127.0.0.1:8765</http_request>
           <payload />
           <evidence>Headers received from http://127.0.0.1:8765/ (no X-Frame-Options):
     Server: Pro-Test-Local-Demo Python/3.12.3
-    Date: Fri, 06 Nov 2026 15:14:25 GMT
+    Date: Fri, 06 Nov 2026 17:13:41 GMT
     Content-Type: text/html; charset=utf-8
     Content-Length: 819
     Cache-Control: no-store
-    Set-Cookie: demo_session=local-example; Path=/
+    Set-Cookie: [redacted]
     Connection: close</evidence>
           <referer />
           <module>http_headers</module>
@@ -358,11 +358,11 @@ host: 127.0.0.1:8765</http_request>
           <payload />
           <evidence>Headers received from http://127.0.0.1:8765/ (no X-Content-Type-Options):
     Server: Pro-Test-Local-Demo Python/3.12.3
-    Date: Fri, 06 Nov 2026 15:14:25 GMT
+    Date: Fri, 06 Nov 2026 17:13:41 GMT
     Content-Type: text/html; charset=utf-8
     Content-Length: 819
     Cache-Control: no-store
-    Set-Cookie: demo_session=local-example; Path=/
+    Set-Cookie: [redacted]
     Connection: close</evidence>
           <referer />
           <module>http_headers</module>
@@ -406,7 +406,7 @@ host: 127.0.0.1:8765</http_request>
           <confidence>Confirmed</confidence>
           <parameter>demo_session</parameter>
           <payload />
-          <evidence>Set-Cookie: demo_session=local-example; Path=/
+          <evidence>Set-Cookie: [redacted]
 (no 'HttpOnly' attribute: JavaScript, and therefore an XSS, can read it)</evidence>
           <referer />
           <module>cookieflags</module>
@@ -439,7 +439,7 @@ host: 127.0.0.1:8765</http_request>
           <confidence>Confirmed</confidence>
           <parameter>demo_session</parameter>
           <payload />
-          <evidence>Set-Cookie: demo_session=local-example; Path=/
+          <evidence>Set-Cookie: [redacted]
 (no 'Secure' attribute: the cookie is also sent over plain HTTP)</evidence>
           <referer />
           <module>cookieflags</module>

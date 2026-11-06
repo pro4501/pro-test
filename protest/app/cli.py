@@ -41,7 +41,9 @@ from protest.net.request import Request
 from protest.net.scope import Scope
 from protest.passive.checks import PassiveScanner
 from protest.core.persister import Persister
+from protest.core.control import ScanControl, resolve_vulnerability_policy
 from protest.core.database import DEFAULT_DATABASE, ScanDatabase
+from protest.core.paths import ensure_private_dir, tighten_file
 from protest.core.vault import VaultError
 from protest.reporting.exploit import (MAX_REQUESTS, MAX_TABLE_ROWS, ExploitationError, baseline_value_for,
                                        exploit, sql_injections, store_result, write_results)
@@ -56,12 +58,12 @@ REPORT_DIR = os.path.join(DATA_DIR, "generated_report")
 # Scan profiles. "settings" only replace options the user left at their default value.
 PROFILES = {
     "standard": {
-        "description": "default modules and settings",
+        "description": "passive checks unless -m says otherwise",
         "modules": None,
         "settings": {},
     },
     "quick": {
-        "description": "default modules, shallow crawl (depth 5, 30 links per page)",
+        "description": "passive checks unless -m says otherwise, shallow crawl (depth 5, 30 links per page)",
         "modules": None,
         "settings": {"depth": 5, "max_links_per_page": 30},
     },
@@ -79,17 +81,25 @@ BANNER = r"""
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="pro-test", description=f"{NAME} {VERSION}: web application vulnerability "
-                                                                 f"scanner (pure Python)")
+    parser = argparse.ArgumentParser(prog="pro-test", description=f"{NAME} {VERSION}: web application vulnerability scanner")
     target = parser.add_mutually_exclusive_group(required=True)
     target.add_argument("-u", "--url", dest="base_url", metavar="URL",
                         help="The base URL used to define the scan scope (default scope is folder)")
     target.add_argument("--list-modules", action="store_true", help="List attack modules and exit")
     parser.add_argument("--data", metavar="DATA", help="Urlencoded data to send with the base URL (POST request)")
-    parser.add_argument("--scope", default="folder", choices=Scope.NAMES, help="Set scan scope")
+    parser.add_argument("--scope", default="folder", choices=Scope.NAMES,
+                        help="Scan scope. folder is the default. host is one hostname and port. "
+                             "subdomain is the old name for host and now means the same thing. "
+                             "domain and punk leave the target host and must be chosen explicitly.")
     parser.add_argument("-m", "--module", dest="modules", default=None, metavar="MODULES_LIST",
-                        help="List of modules to load (e.g. 'common', 'all', 'passive', 'xss,sql', 'common,-xss', "
-                             "'all,sql:get'). An empty string means crawl only.")
+                        help="Modules to load. Omitted means passive. 'common' and 'all' send attack traffic. "
+                             "Examples: 'xss,sql', 'common,-xss', 'sql:get'. An empty string crawls only.")
+    parser.add_argument("--on-vulnerability", choices=["ask", "stop", "continue"], default=None,
+                        help="What to do when a vulnerability is recorded. On a terminal the default is ask "
+                             "(Enter stops). Without a terminal the default is stop. continue keeps scanning.")
+    parser.add_argument("--store-response-bodies", action="store_true",
+                        help="Write response bodies into the session file. The default keeps them in memory "
+                             "for this process only. Cookie and Authorization values are redacted either way.")
     parser.add_argument("-l", "--level", type=int, default=1, choices=[1, 2],
                         help="Set attack level (2 also injects in the raw query string)")
     parser.add_argument("-p", "--proxy", metavar="PROXY_URL", help="HTTP(S) proxy to use (http://host:port/)")
@@ -195,16 +205,17 @@ def list_modules():
     print("[*] Available modules:")
     for name in sorted(ALL_MODULES):
         tags = []
-        if name in COMMON_MODULES:
-            tags.append("used by default")
         if name in PASSIVE_MODULES:
             tags.append("passive")
+            tags.append("used when -m is omitted")
+        elif name in COMMON_MODULES:
+            tags.append("in the common set, not the default")
         suffix = f" ({', '.join(tags)})" if tags else ""
         print(f"\t{name}{suffix}\n\t\t{module_description(name)}\n")
 
 
 def session_file(base: Request, scope: str, directory: str) -> str:
-    os.makedirs(directory, exist_ok=True)
+    ensure_private_dir(directory)
     digest = hashlib.sha256(base.url.encode("utf-8", "replace")).hexdigest()[:8]
     return os.path.join(directory, f"{base.netloc.replace(':', '_')}_{scope}_{digest}.db")
 
@@ -271,9 +282,10 @@ def run_exploitation(client: HttpClient, persister: Persister, args: argparse.Na
             output = resolve_output_path(args.exploit_output, "json", netloc, REPORT_DIR)
         else:
             folder = os.path.join(DATA_DIR, "extracted")
-            os.makedirs(folder, exist_ok=True)
+            ensure_private_dir(folder)
             output = os.path.join(folder, f"extracted_{netloc}_{time.strftime('%m%d%Y_%H%M%S')}.json")
         write_results(output, results, args.base_url)
+        tighten_file(output)
         log.log_green(f"[*] Extracted data saved to {output}")
     return results
 
@@ -397,6 +409,33 @@ def run(args: argparse.Namespace) -> int:
     return code
 
 
+def _emit_report(args, persister, client, base_request, auth_state, resource_count) -> int:
+    """Write the report from what has already been stored. Does not send requests."""
+    if getattr(args, "no_report", False):
+        log.info(f"[*] {client.request_count} HTTP requests sent")
+        persister.close()
+        return 0
+    generator = GENERATORS[args.format]()
+    crawled = []
+    if args.detailed_report:
+        crawled = [{"method": req.method, "url": req.url, "status": resp.status if resp else None}
+                   for req, resp in persister.get_crawled_urls()]
+    generator.set_report_info(base_request.url, args.scope, f"{NAME} {VERSION}", auth_state, resource_count,
+                              args.detailed_report, crawled)
+    for finding in persister.get_findings():
+        generator.add_finding(finding)
+    output = resolve_output_path(args.output, args.format, base_request.netloc, REPORT_DIR)
+    log.log_blue("\n[*] Generating report...")
+    generator.generate(output)
+    tighten_file(output)
+    log.log_green(f"A report has been generated in the file {output}")
+    if args.format == "html":
+        log.log_blue(f"Open {output} with a browser to see this report.")
+    log.info(f"[*] {client.request_count} HTTP requests sent")
+    persister.close()
+    return 0
+
+
 def _run_scan(args: argparse.Namespace, recorder: ScanRecorder) -> int:
     apply_profile(args)
     if args.profile != "standard":
@@ -452,6 +491,17 @@ def _run_scan(args: argparse.Namespace, recorder: ScanRecorder) -> int:
     if args.http_user:
         config.credential = HttpCredential(args.http_user, args.http_password, args.auth_method)
     client = HttpClient(config)
+    policy, interactive = resolve_vulnerability_policy(getattr(args, "on_vulnerability", None), sys.stdin)
+    control = ScanControl(policy, interactive)
+    client.control = control
+    client.scope = scope
+    client.bound_origin = base_request
+    if args.scope == "subdomain":
+        log.warning("[!] --scope subdomain is the old name for host. It now means the same hostname and port, "
+                    "not every port on that name.")
+    if not interactive and policy in ("ask", "stop"):
+        log.info("[*] This session is not a terminal. A vulnerability stops the scan. "
+                 "Pass --on-vulnerability continue to keep scanning.")
 
     # ------------------------------------------------------------------ modules
     try:
@@ -464,7 +514,7 @@ def _run_scan(args: argparse.Namespace, recorder: ScanRecorder) -> int:
     db_file = session_file(base_request, args.scope, args.store_session or SESSION_DIR)
     if args.flush_session and os.path.exists(db_file):
         os.unlink(db_file)
-    persister = Persister(db_file)
+    persister = Persister(db_file, store_bodies=bool(getattr(args, "store_response_bodies", False)), control=control)
     if args.flush_attacks:
         persister.flush_attacks()
     recorder.start(base_request.url, args.scope, args.profile, activated, db_file, client)
@@ -510,6 +560,7 @@ def _run_scan(args: argparse.Namespace, recorder: ScanRecorder) -> int:
     # ------------------------------------------------------------------ crawl
     passive = PassiveScanner(persister)
     passive.set_modules(activated)
+    stopped_for = None
     if not args.skip_crawl and not (persister.have_attacks_started() and not args.resume_crawl):
         if persister.has_scan_started():
             log.info("[*] Resuming scan from previous session, please wait")
@@ -524,7 +575,7 @@ def _run_scan(args: argparse.Namespace, recorder: ScanRecorder) -> int:
         explorer.qs_limit = SCAN_FORCE_VALUES[args.scan_force]
         explorer.bad_params = set(args.excluded_parameters)
 
-        log.log_blue("[*] Crawling the target (press Ctrl+C to stop the crawl and start attacking)")
+        log.log_blue("[*] Crawling the target (Ctrl+C stops and keeps what was collected)")
         start = time.monotonic()
         buffer = []
         crawled = 0
@@ -539,12 +590,18 @@ def _run_scan(args: argparse.Namespace, recorder: ScanRecorder) -> int:
                 if len(buffer) >= 100:
                     persister.save_resources(buffer)
                     buffer = []
+                if control.stopped:
+                    log.warning("[!] Stopping. No further crawl or attack requests will be sent.")
+                    stop_event.set()
+                    stopped_for = "policy"
+                    break
                 if args.max_scan_time and time.monotonic() - start > args.max_scan_time and not stop_event.is_set():
                     log.info("Max scan time was reached, stopping.")
                     stop_event.set()
         except KeyboardInterrupt:
-            log.info("[*] Crawl interrupted, waiting for running requests to finish...")
+            log.info("[*] Crawl interrupted. The attack phase will not start.")
             stop_event.set()
+            stopped_for = "interrupt"
         finally:
             log.clear_status()
             persister.save_resources(buffer)
@@ -557,6 +614,12 @@ def _run_scan(args: argparse.Namespace, recorder: ScanRecorder) -> int:
 
     resource_count = persister.count_paths()
     log.info(f"[*] {NAME} found {resource_count} URLs and forms during the scan")
+    if stopped_for:
+        if resource_count == 0:
+            persister.close()
+            return 130 if stopped_for == "interrupt" else 1
+        code = _emit_report(args, persister, client, base_request, auth_state, resource_count)
+        return 130 if stopped_for == "interrupt" else code
     if resource_count == 0 and not args.skip_crawl:
         log.error("[!] No page could be retrieved. Check the URL and that the target is up.")
         persister.close()
@@ -576,37 +639,19 @@ def _run_scan(args: argparse.Namespace, recorder: ScanRecorder) -> int:
             persister.close()
             return 0
     except KeyboardInterrupt:
-        log.info("[*] Attack interrupted, generating the report")
+        scanner.aborted = True
+        log.info("[*] Attack interrupted. Writing the report and not continuing.")
+
+    if scanner.aborted or control.stopped:
+        code = _emit_report(args, persister, client, base_request, auth_state, resource_count)
+        return 130 if scanner.aborted else code
 
     # ------------------------------------------------------------------ exploitation (Step 5)
     if getattr(args, "exploit", False):
         # Done before the report so the extracted data is part of the report itself.
         run_exploitation(client, persister, args)
 
-    # ------------------------------------------------------------------ report
-    if getattr(args, "no_report", False):
-        # The interactive menu reads the findings from the session itself
-        log.info(f"[*] {client.request_count} HTTP requests sent")
-        persister.close()
-        return 0
-    generator = GENERATORS[args.format]()
-    crawled = []
-    if args.detailed_report:
-        crawled = [{"method": req.method, "url": req.url, "status": resp.status if resp else None}
-                   for req, resp in persister.get_crawled_urls()]
-    generator.set_report_info(base_request.url, args.scope, f"{NAME} {VERSION}", auth_state, resource_count,
-                              args.detailed_report, crawled)
-    for finding in persister.get_findings():
-        generator.add_finding(finding)
-    output = resolve_output_path(args.output, args.format, base_request.netloc, REPORT_DIR)
-    log.log_blue("\n[*] Generating report...")
-    generator.generate(output)
-    log.log_green(f"A report has been generated in the file {output}")
-    if args.format == "html":
-        log.log_blue(f"Open {output} with a browser to see this report.")
-    log.info(f"[*] {client.request_count} HTTP requests sent")
-    persister.close()
-    return 0
+    return _emit_report(args, persister, client, base_request, auth_state, resource_count)
 
 
 def main(argv=None) -> int:

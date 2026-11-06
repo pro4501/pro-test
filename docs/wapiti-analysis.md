@@ -132,7 +132,7 @@ Severity levels: 4 Critical, 3 High, 2 Medium, 1 Low, 0 Info. Finding types: *vu
 
 ## 5. How Pro-Test maps to it
 
-| Wapiti | Pro-Test (stdlib only) |
+| Wapiti | Pro-Test |
 |---|---|
 | httpx async client | `protest/net/client.py`: urllib with redirects disabled, thread-local openers |
 | asyncio crawler | `protest/core/crawler.py`: `ThreadPoolExecutor` breadth-first crawl with the same limits and soft-404 logic |

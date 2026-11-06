@@ -1,7 +1,7 @@
 # Pro-Test 1.0.0 report
 
 * **Target:** http://127.0.0.1:8765/
-* **Date:** Fri, 06 Nov 2026 15:14:24 +0000
+* **Date:** Fri, 06 Nov 2026 17:13:41 +0000
 * **Scope:** folder
 * **Crawled pages:** 3
 
@@ -101,7 +101,7 @@ curl "http://127.0.0.1:8765/"
 
 ```text
 GET http://127.0.0.1:8765/ -> HTTP 200
-Set-Cookie: demo_session=local-example; Path=/
+Set-Cookie: [redacted]
 ```
 
 ```http
@@ -131,11 +131,11 @@ curl "http://127.0.0.1:8765/"
 ```text
 Headers received from http://127.0.0.1:8765/ (no X-Frame-Options):
     Server: Pro-Test-Local-Demo Python/3.12.3
-    Date: Fri, 06 Nov 2026 15:14:24 GMT
+    Date: Fri, 06 Nov 2026 17:13:40 GMT
     Content-Type: text/html; charset=utf-8
     Content-Length: 819
     Cache-Control: no-store
-    Set-Cookie: demo_session=local-example; Path=/
+    Set-Cookie: [redacted]
     Connection: close
 ```
 
@@ -166,11 +166,11 @@ curl "http://127.0.0.1:8765/"
 ```text
 Headers received from http://127.0.0.1:8765/ (no X-Content-Type-Options):
     Server: Pro-Test-Local-Demo Python/3.12.3
-    Date: Fri, 06 Nov 2026 15:14:24 GMT
+    Date: Fri, 06 Nov 2026 17:13:40 GMT
     Content-Type: text/html; charset=utf-8
     Content-Length: 819
     Cache-Control: no-store
-    Set-Cookie: demo_session=local-example; Path=/
+    Set-Cookie: [redacted]
     Connection: close
 ```
 
@@ -200,7 +200,7 @@ curl "http://127.0.0.1:8765/"
 **Evidence**
 
 ```text
-Set-Cookie: demo_session=local-example; Path=/
+Set-Cookie: [redacted]
 (no 'HttpOnly' attribute: JavaScript, and therefore an XSS, can read it)
 ```
 
@@ -230,7 +230,7 @@ curl "http://127.0.0.1:8765/"
 **Evidence**
 
 ```text
-Set-Cookie: demo_session=local-example; Path=/
+Set-Cookie: [redacted]
 (no 'Secure' attribute: the cookie is also sent over plain HTTP)
 ```
 

@@ -1,8 +1,8 @@
 # Pro-Test
 
-Pro-Test is a web application vulnerability scanner written in pure Python. It crawls a site, reads each response, optionally sends active checks, and writes a report. The command-line entry point is `pro-test`, which calls `protest.app.cli:main`. With no arguments it opens a numbered interactive menu. There is no curses interface.
+Pro-Test is a web application vulnerability scanner written in Python. It crawls a site, reads each response, optionally sends active checks, and writes a report. The command-line entry point is `pro-test`, which calls `protest.app.cli:main`. With no arguments it opens a numbered interactive menu. There is no curses interface. A smaller teaching program, `pro-test-msc`, lives in [msc-edition/](msc-edition/) and does not import this scanner.
 
-Auther - **Pratham Brahmbhatt**.
+Author - **Pratham Brahmbhatt**.
 
 **Only scan an application you own or have written permission to test.** The verified walkthrough below uses the localhost fixture in `examples/local-demo/` and the passive checks only (`-m passive`). Read [SECURITY.md](SECURITY.md) before any other use.
 
@@ -10,62 +10,75 @@ Pro-Test is free software under the GNU General Public License, version 2 or any
 
 ## Authorisation and explicit opt-in
 
-The tool's purpose is an authorised assessment: crawl, passive checks, and the active modules in `protest/active/`. Omitting `-m` loads `common`, which includes active checks (`exec`, `file`, `sql`, `xss`, `permanentxss`, `redirect`, `ssl`) as well as the passive checks. That is the normal scan, and it still requires permission. Pass `-m passive` when the run should only read responses.
+The tool's purpose is an authorised assessment: crawl, passive checks, and the active modules in `protest/active/`. Omitting `-m` loads `passive` only. The active set is explicit: `-m common` or `-m all`, or the menu presets `A` and `F`. `common` still includes `exec`, `file`, `sql`, `xss`, `permanentxss`, `redirect`, and `ssl`, plus the passive checks. That set sends attack traffic and still requires permission.
 
 These actions are off unless you ask for them. Each one prints a warning or sits behind its own flag:
 
 | Action | How you turn it on | What it does |
 |---|---|---|
-| Database extraction | `--exploit`, or menu option 7 after a scan | Reads tables and rows through a confirmed SQL injection. Account-like tables are read first. |
+| Database extraction | `--exploit`, or choice 8 on the "What next?" menu | Reads tables and rows through a confirmed SQL injection. Account-like tables are read first. |
 | Leave the target host | `--scope domain` | Other host names on the same registered domain. |
 | Follow links to any site | `--scope punk` | No host limit. Every host reached needs its own authorisation. |
 | Skip TLS checks | `--verify-ssl 0` | Accepts any certificate. Meant for a localhost lab whose certificate you created. |
 
-The default scope is `folder`: the crawl stays on the target host, under the base URL's directory. `url`, `page`, and `subdomain` also stay on that host. Nothing in the default path switches the scope to `domain` or `punk`.
+The default scope is `folder`: the crawl stays on the same scheme, hostname and port, under the base URL's directory. `url`, `page`, and `host` use that same origin. `subdomain` is the old name for `host` and now means the same hostname and port, not every port. Nothing in the default path switches the scope to `domain` or `punk`. `domain` uses a curated suffix list and does not guess the last two labels when the suffix is unknown.
 
 TLS certificate verification is on by default in the command line and in the menu. Plain HTTP, including the localhost demo, does not use a certificate. The menu asks before it will turn verification off, and only after a certificate check has failed or you open Custom settings.
 
-No phone-home request, persistence mechanism, or hardcoded customer target was found. A previous form-filler address on `mailinator.com` is now `user@example.com`. Passwords stored in the history database use the home-grown construction in `protest/core/vault.py`; a reviewed AES-GCM implementation is preferable for production storage of those secrets.
+No phone-home request, persistence mechanism, or hardcoded customer target was found. A previous form-filler address on `mailinator.com` is now `user@example.com`. Passwords stored in the history database are encrypted with Fernet from the `cryptography` package. Tokens that start with `pt1:` were written by the previous construction. They are left in the database and are not decrypted; enter the secret again if you still need it.
 
 ## Prerequisites
 
 - Python 3.11 or newer. The checks in this repository were run with CPython 3.12.3.
-- The standard library only. The project declares no third-party dependencies.
-- `pip` and the `venv` module. On Debian or Ubuntu, `python3-venv` provides `venv`.
+- `git`, and `pipx` for a normal install. On Debian, Ubuntu, or Kali: `sudo apt install python3 python3-pip python3-venv pipx git`, then `pipx ensurepath`. Open a new terminal so `~/.local/bin` is on `PATH`.
+- The `cryptography` package. `pipx` installs it inside Pro-Test's private environment. You do not activate that environment, and you do not install it into the system Python.
+
+`pipx` is the install to use. It puts `pro-test` on your PATH. A root install writes the command to `/root/.local/bin`, which a normal account does not see. Install as the account you scan with. There is no `.deb` and no apt repository for this project.
 
 ## Install
 
-Clone the repository, then run the rest of the commands in that checkout. The repository root is the directory that contains `pyproject.toml`. `pip install .` installs that directory, so it fails if the shell is still in your home directory or another folder.
-
-Git needs network access for the clone. After that, `pip` only needs network access if it has to fetch `setuptools`.
-
-### Linux, Kali, and macOS
+`pipx install .` installs the directory that contains `pyproject.toml`. Run it from the repository root, not from your home directory.
 
 ```bash
 git clone https://github.com/pro4501/pro-test.git
 cd pro-test
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install .
+pipx install .
+```
+
+Open a new terminal if this one was already open before `pipx ensurepath`. Then, from any directory:
+
+```bash
 pro-test --version
 pro-test --help
 ```
+
+The clone needs network access to GitHub. `pipx` needs network access to fetch `cryptography` and `setuptools`. You can skip the checkout with `pipx install git+https://github.com/pro4501/pro-test.git`.
+
+A later checkout is installed again with `pipx install --force .` from the repository root. `pipx upgrade pro-test` only upgrades a copy that was installed from a package index. Remove the command with `pipx uninstall pro-test`.
 
 ### Windows PowerShell
 
 ```powershell
 git clone https://github.com/pro4501/pro-test.git
 cd pro-test
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install .
-pro-test --version
-pro-test --help
+py -3.11 -m pip install --user pipx
+py -3.11 -m pipx ensurepath
+py -3.11 -m pipx install .
 ```
 
-If activation is blocked, run `Set-ExecutionPolicy -Scope Process RemoteSigned` in that window and try the activate script again.
+Open a new PowerShell window, then run `pro-test --version`.
 
-`python -m protest` is the same program and works from this repository without an install, because Python puts the current directory on the module path. After `pip install`, `pro-test` works from any directory.
+### Working on the source
+
+The virtual environment below is for editing this repository. It is not required once `pipx` has installed the command.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+```
+
+`python -m protest` from the repository root runs the same program without an install, because Python puts the current directory on the module path.
 
 ## Verified quickstart (localhost only)
 
@@ -77,13 +90,16 @@ Terminal 1:
 python examples/local-demo/server.py 8765
 ```
 
-Terminal 2, from the repository root, with the virtual environment activated:
+Terminal 2, from any directory after `pipx install`:
 
 ```bash
 pro-test -u http://127.0.0.1:8765/ -m passive --profile quick --no-database \
   --store-session /tmp/protest-demo-sessions --flush-session \
+  --on-vulnerability continue \
   -f txt -o examples/local-demo/output/report.txt
 ```
+
+`--on-vulnerability continue` is required for this full passive report when the shell is not interactive. Without it, a non-interactive run stops at the first vulnerability and still writes the report for what it has already seen.
 
 The files in `examples/local-demo/output/` come from that command, once per format, against the fixture on 6 Nov 2026. The terminal screenshot is an xterm capture of the same command with `--color`. The wording matches. The screenshot's last line was printed by the capture shell after Pro-Test exited. None of these runs used an active module or `--exploit`.
 
@@ -120,7 +136,7 @@ One of `-u URL` or `--list-modules` is required for a non-menu run. The URL need
 | 0 | The scan finished and a report was written, or `--list-modules` / `--version` / `--help` ran. |
 | 1 | HTTP authentication failed, or the crawl retrieved no page (the target refused the connection or the URL did not answer). |
 | 2 | The arguments are inconsistent or the URL has no `http`/`https` scheme. |
-| 130 | Ctrl+C reached `main()`. Ctrl+C during the crawl stops the crawl and continues into the attack phase instead. |
+| 130 | Ctrl+C. The crawl does not continue into the attack, and an attack in progress stops. The report is written from what was already stored. |
 
 ### Target, scope, and crawl
 
@@ -128,7 +144,7 @@ One of `-u URL` or `--list-modules` is required for a non-menu run. The URL need
 |---|---|
 | `-u`, `--url` | Base URL. Default scope is `folder`. |
 | `--data` | URL-encoded body. Sends the base URL as POST. |
-| `--scope` | `url`, `page`, `folder` (default), or `subdomain` stay on the target host. `domain` and `punk` are explicit off-host modes and print a warning. |
+| `--scope` | `url`, `page`, `folder` (default), and `host` stay on the same scheme, hostname and port. `subdomain` is accepted and means `host`. `domain` and `punk` are explicit off-host modes and print a warning. |
 | `-s`, `--start` | Extra start URL, or a file of URLs. Repeatable. |
 | `-x`, `--exclude` | URL or wildcard to skip. Repeatable. |
 | `-d`, `--depth` | Crawl depth. Default 40. |
@@ -142,7 +158,9 @@ One of `-u URL` or `--list-modules` is required for a non-menu run. The URL need
 
 | Option | Role |
 |---|---|
-| `-m`, `--module` | `common` (the default when `-m` is omitted), `all`, `passive`, a comma-separated list, removals such as `common,-xss`, or method limits such as `sql:get`. An empty string crawls and does not run modules. |
+| `-m`, `--module` | Omitted means `passive`. `common` and `all` are explicit and send attack traffic. Also a comma-separated list, removals such as `common,-xss`, or method limits such as `sql:get`. An empty string crawls and does not run modules. |
+| `--on-vulnerability` | `ask` (default on a terminal; Enter stops), `stop` (default when stdin is not a terminal), or `continue`. A repeated finding for the same category, host and parameter does not ask again. |
+| `--store-response-bodies` | Write response bodies into the session file. The default keeps them in memory for this process only. Cookie and Authorization values are redacted either way. |
 | `-l`, `--level` | `1` (default) or `2`. Level 2 also sends checks in the raw query string. |
 | `--skip` | Parameter name to leave alone. Repeatable. |
 | `-r`, `--remove` | Drop this parameter from URLs. Repeatable. |
@@ -159,7 +177,7 @@ One of `-u URL` or `--list-modules` is required for a non-menu run. The URL need
 | `-v`, `--verbose` | `0` quiet, `1` print each attacked URL, `2` print every request. |
 | `--log` | Append a log file. |
 
-Omitting `-m` loads `common`. That set includes the active modules `exec`, `file`, `sql`, `xss`, `permanentxss`, `redirect`, and `ssl`, plus the passive checks. Pass `-m passive` when the run should only read responses.
+Omitting `-m` loads `passive`. Those checks read the response the crawler already fetched. `-m common` adds the active modules `exec`, `file`, `sql`, `xss`, `permanentxss`, `redirect`, and `ssl`. When a vulnerability is recorded, the default on a terminal is to ask; Enter and end-of-file stop. A request already in flight can finish. The next request is not sent. `--on-vulnerability continue` is how a script keeps scanning.
 
 ### Authentication and sessions
 
@@ -196,28 +214,29 @@ It then lists numbered checks. The labels and numbers are fixed in `protest/app/
 
 | Choice | What it passes to the scanner |
 |---|---|
-| 1 | `sql,timesql` |
-| 2 | `xss,permanentxss` |
-| 3 | `exec,shellshock` |
-| 4 | `file` |
-| 5 | `redirect` |
-| 6 | `crlf` |
-| 7 | `ldap` |
-| 8 | `xxe` |
-| 9 | `csrf` |
-| 10 | `brute_login_form` |
-| 11 | `backup` |
-| 12 | `buster` |
-| 13 | `htaccess` |
-| 14 | `methods` |
-| 15 | `wapp` |
-| 16 | `ssl` |
-| 17 | `passive` |
+| 1 | `passive` |
+| 2 | `sql,timesql` |
+| 3 | `xss,permanentxss` |
+| 4 | `exec,shellshock` |
+| 5 | `file` |
+| 6 | `redirect` |
+| 7 | `crlf` |
+| 8 | `ldap` |
+| 9 | `xxe` |
+| 10 | `csrf` |
+| 11 | `brute_login_form` |
+| 12 | `backup` |
+| 13 | `buster` |
+| 14 | `htaccess` |
+| 15 | `methods` |
+| 16 | `wapp` |
+| 17 | `ssl` |
 | 18 | `access_control` (asks for two test accounts) |
-| A | `common` |
+| P | `passive` (the suggested start) |
+| A | `common` (sends attack traffic) |
 | F | `all` |
 
-Settings are `1` standard, `2` quick, or `3` custom (scope, depth, timeout, threads, attack level, rate, cookie). The verified menu capture used URL `http://127.0.0.1:8765/`, confirmation `yes`, choice `17`, settings `2`, then `0` to exit. Option 7 on the later "What next?" menu is database extraction and was not selected.
+Settings are `1` standard (depth 40), `2` quick crawl (depth 5; this does not choose modules), or `3` custom (scope, depth, timeout, threads, attack level, rate, cookie). The menu capture used URL `http://127.0.0.1:8765/`, confirmation `yes`, choice `P`, settings `2`. Choice 8 on the later "What next?" menu is database extraction and was not selected. Enter on a sub-prompt goes back. Enter on "What next?" does not exit; type `0` to leave.
 
 ![Interactive menu after the passive local demo](examples/local-demo/screenshots/interactive-menu.png)
 
@@ -228,18 +247,18 @@ After a scan the menu offers:
 | 1 | Finding detail, including the stored request |
 | 2 | Send the stored check again and print whether it still reproduces |
 | 3 | Write a report in any supported format |
-| 6 | Print informational results as well as weaknesses |
-| 7 | Database extraction. Not part of the demo. |
-| 4 | Another module set against the same URL |
-| 5 | A new URL |
-| 8 | History, parameters, and stored credentials in the central database |
+| 4 | Print informational results as well as weaknesses |
+| 5 | Another module set against the same URL |
+| 6 | A new URL |
+| 7 | History, parameters, and stored credentials in the central database |
+| 8 | Database extraction. Not part of the demo. |
 | 0 | Exit |
 
 The menu always records the run in `~/.pro-test/` (session plus the central database). The command-line quickstart passes `--no-database` and `--store-session` so that history stays in the directory you name.
 
 ## Modules
 
-Passive modules only read the response already fetched by the crawler. Active modules send further requests. "Default" means the module is in the `common` set.
+Passive modules only read the response already fetched by the crawler. Active modules send further requests. "Yes" in the Default column means the module runs when `-m` is omitted.
 
 | Module | Default | What it reports |
 |---|---|---|
@@ -251,14 +270,14 @@ Passive modules only read the response already fetched by the crawler. Active mo
 | `unsecure_password` | yes | A password field posted over HTTP |
 | `https_redirect` | yes | HTTP used for cookies, parameters, or POST bodies |
 | `inconsistent_redirection` | yes | A redirect whose body still contains links or forms |
-| `xss` | yes | Reflected script or HTML injection |
-| `permanentxss` | yes | A marker from `xss` showing up on another page |
-| `sql` | yes | Error-based and boolean SQL injection |
+| `xss` | | Reflected script or HTML injection. In `-m common`. |
+| `permanentxss` | | A marker from `xss` showing up on another page. In `-m common`. |
+| `sql` | | Error-based and boolean SQL injection. In `-m common`. |
 | `timesql` | | Time-based SQL injection |
-| `exec` | yes | Command or code execution |
-| `file` | yes | Path traversal and file inclusion |
-| `redirect` | yes | Open redirect |
-| `ssl` | yes | Certificate and legacy TLS issues on HTTPS |
+| `exec` | | Command or code execution. In `-m common`. |
+| `file` | | Path traversal and file inclusion. In `-m common`. |
+| `redirect` | | Open redirect. In `-m common`. |
+| `ssl` | | Certificate and legacy TLS issues on HTTPS. In `-m common`. |
 | `crlf` | | Header injection |
 | `ldap` | | LDAP error after a test value |
 | `xxe` | | In-band XML external entities |
@@ -281,7 +300,7 @@ There is no configuration file and no `PROTEST_*` environment variable. Behaviou
 | Path | Contents |
 |---|---|
 | `~/.pro-test/protest.db` | Every scan, parameter, finding, and credential row. Usernames are plain text. |
-| `~/.pro-test/protest.key` | Key for the password and token column. Created with mode `0600`. |
+| `~/.pro-test/protest.key` | 32-byte key for the password and token column. Created with mode `0600`. Fernet keys are derived from it. |
 | `~/.pro-test/scans/` | One SQLite file per target and scope. |
 | `~/.pro-test/menu_sessions/` | Sessions started from the menu. |
 | `~/.pro-test/generated_report/` | Default HTML reports. |
@@ -289,7 +308,7 @@ There is no configuration file and no `PROTEST_*` environment variable. Behaviou
 
 A found password is stored only in the encrypted credential table; copies inside finding text are replaced with `******`. Data read by the extraction step is not copied into `protest.db`. Anyone who has both the database and the key can decrypt the column. Keep the key off shared disks and out of git. `.gitignore` excludes these paths.
 
-Session files are named from the host, the scope, and a short hash of the base URL, for example `127.0.0.1_8765_folder_9e435727.db`.
+Session files are named from the host, the scope, and a short hash of the base URL, for example `127.0.0.1_8765_folder_9e435727.db`. On Unix the directory is mode `0700` and the file is mode `0600`. Response bodies are not in that file unless you passed `--store-response-bodies`. The same process still has the bodies in memory, so the attack phase of that run can read them. A later process does not. Cookie, Set-Cookie, Authorization, Proxy-Authorization and `X-Api-Key` values are stored as `[redacted]`.
 
 ## Output formats
 
@@ -310,8 +329,9 @@ The sample files are **LOCAL DEMO / EXAMPLE** output from `http://127.0.0.1:8765
 - The crawler understands HTML links and forms with the standard library. It does not run JavaScript, drive a browser, import OpenAPI, or speak NTLM, SOCKS, or Tor.
 - There is no out-of-band callback server. Cross-site scripting checks use a `pro-test.invalid` hostname, which is not a host this program contacts.
 - TLS certificates are checked unless you pass `--verify-ssl 0`. A localhost lab with a certificate you created is the case that flag is for. Plain HTTP is unchanged.
-- `vault.py` documents its own limit: the construction is HMAC-SHA256 made from the standard library, and a reviewed AES-GCM implementation is preferable for production storage.
-- `domain` and `punk` are the scopes that leave the target host. Both are selected by name and print a warning. The default `folder` scope does not.
+- Credential tokens are Fernet (`pt2:`). A `pt1:` token is rejected and left in the database. Anyone with both the database and `protest.key` can still decrypt new tokens. `cryptography` is Apache-2.0 or BSD-3-Clause; shipping it with this GPL-2.0-or-later program is commonly done under GPL-3. That sentence is not a legal opinion. See [NOTICE](NOTICE).
+- `domain` uses the suffix list in `protest/net/scope.py`. It is not the Public Suffix List. An unknown suffix does not pull in neighbouring hostnames. `punk` is still any http or https URL, and it does not follow `file:` or other schemes. Cookie and Authorization headers are not sent to a different origin.
+- While a vulnerability prompt is open, a request that has already been sent can finish. The client refuses the next one after Stop.
 - A target that refuses the connection exits 1 and does not write a report. A target that answers, even with an empty or error page, still exits 0.
 - The author's notes refer to a fictional practice site and a sibling `Test-Server/university_site.py`. That server is not in this tree. Rebuilding it here would mean standing up the old multi-issue lab, so the 11 tests that import it stay skipped. They are not passes. Database extraction was not run against that missing server or against the passive localhost fixture (the fixture has nothing to extract).
 - The menu is a sequence of prompts. Piped input works; colours follow whether stdout is a terminal.
@@ -322,8 +342,8 @@ Differences the author recorded relative to Wapiti (headless browsing, an interc
 
 | What you see | What it means |
 |---|---|
-| `Directory '.' is not installable` | `pip install .` did not run in the repository root. `cd pro-test` (the folder that contains `pyproject.toml`) and run the install again. |
-| `pro-test: command not found` | The virtual environment is not active, or `pip install .` failed before it installed the `pro-test` command. From the repository root, run `source .venv/bin/activate` (PowerShell: `.\.venv\Scripts\Activate.ps1`) and then `python -m pip install .` again. `python -m protest --help` from that directory still works. |
+| `Directory '.' is not installable` | `pipx install .` or `pip install .` did not run in the repository root. `cd pro-test` (the folder that contains `pyproject.toml`) and run it again. |
+| `pro-test: command not found` | The shell was started before `pipx ensurepath`, or the command was installed as root into `/root/.local/bin`. Open a new terminal as the same user. Do not activate a virtual environment for a normal run. `python -m protest --help` from the repository root still works. |
 | `No module named protest` | The current directory is not the repository and the package is not installed. |
 | `invalid choice: 'safe'` | The only profiles are `standard` and `quick`. |
 | `Invalid base URL` and exit 2 | Include `http://` or `https://`. |
@@ -334,7 +354,8 @@ Differences the author recorded relative to Wapiti (headless browsing, an interc
 | A second run seems to skip the crawl | A session file already exists. Pass `--flush-session` or `--resume-crawl`. |
 | The menu says the scan was cancelled | The permission question defaults to no. Answer `yes` only for a host you are allowed to test. |
 | Reports or `protest.db` appeared in your home directory | The menu, or a CLI run without `--no-database`, writes `~/.pro-test/`. |
-| PowerShell refuses `Activate.ps1` | `Set-ExecutionPolicy -Scope Process RemoteSigned`, then activate again. |
+| `This secret was stored as pt1:` | The row was written by the old construction. It is still in the database and was not decrypted. Enter the password or token again. |
+| The scan stops after the first finding | Stdin is not a terminal, so the default is stop. Pass `--on-vulnerability continue` to keep scanning. Enter at the prompt also stops. |
 
 ## Tests and development
 
@@ -344,36 +365,42 @@ From the repository root:
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
-python -m unittest tests.test_units tests.test_local_demo tests.test_cli_smoke tests.test_end_to_end -v
+python -m unittest tests.test_units tests.test_local_demo tests.test_cli_smoke tests.test_end_to_end tests.test_safety -v
+cd msc-edition && python -m unittest tests.test_edition -v
 ```
 
-The command above collects 34 tests. 11 are skipped and 23 are executed. On the run recorded for this release, all 23 executed tests passed. The 11 skips are not passes: they are the end-to-end and access-control cases in `tests/test_end_to_end.py`, which import `university_site`. That legacy practice server is not in this tree, and it was not replaced with a stand-in that pretends those cases ran.
+The full-tool command collects 45 tests. 11 are skipped and 34 are executed. On the run recorded with this change, all 34 executed tests passed. The 11 skips are not passes: they are the end-to-end and access-control cases in `tests/test_end_to_end.py`, which import `university_site`. That legacy practice server is not in this tree, and it was not replaced with a stand-in that pretends those cases ran. The MSc edition command collects 7 tests, skips none, and those 7 passed on the same run.
 
 `tests/test_exploit_step5.py` drives database extraction against an in-process stand-in. It was not executed for this release. `python -m unittest discover -s tests -t .` collects that module as well; use the command above for the release checks. The coverage gap is those 11 skipped cases plus the unrun extraction test.
 
 GitHub Actions runs that same command, on Python 3.11 and 3.12, in `.github/workflows/tests.yml`. The workflow does not discover tests, does not run extraction, and does not contact a host other than what those modules already use (the localhost fixture and a closed `127.0.0.1` port).
 
-`tests/test_units.py` covers requests, the crawler mutator, scope, module-name parsing, the credential vault, and the local XSS context checker. `tests/test_local_demo.py` checks that the fixture stays on `127.0.0.1` and does not reflect input. `tests/test_cli_smoke.py` checks exit codes 2 and 1 for a bad URL and a closed port.
+`tests/test_units.py` covers requests, the crawler mutator, scope, module-name parsing, the credential vault, and the local XSS context checker. `tests/test_safety.py` covers origin-bound credentials, redirects, the pause, and file modes, all on `127.0.0.1`. `tests/test_local_demo.py` checks that the fixture stays on `127.0.0.1` and does not reflect input. `tests/test_cli_smoke.py` checks exit codes 2 and 1 for a bad URL and a closed port.
 
 An editable install (`pip install -e .`) keeps the console script pointed at this checkout. Packaging was also checked with a normal `pip install` of this directory into a fresh virtual environment: the wheel builds, `pro-test --version` prints `Pro-Test 1.0.0`, and `pro-test --help` exits 0 from another working directory.
 
 Layout:
 
 ```
-protest/     scanner package
+protest/     full scanner package (command: pro-test)
   app/       cli.py and menu.py
-  core/      crawler, scheduler, session, findings, history database, vault
+  core/      crawler, scheduler, session, findings, pause, redaction, vault
   net/       HTTP client, scope, login helpers
   parsing/   HTML links and forms
   active/    active modules
   passive/   response checks
   reporting/ report writers, live re-check, database extraction
-tests/       unittest modules
+msc-edition/ separate teaching package (command: pro-test-msc)
+tests/       unittest modules for the full scanner
 examples/local-demo/   localhost fixture and LOCAL DEMO / EXAMPLE output
 docs/        author's code guide and Wapiti notes
 LICENSE      GNU GPL version 2 (the program is version 2 or later)
 NOTICE       copyright and provenance for sqlmap and Wapiti material
 ```
+
+## Educational edition
+
+`msc-edition/` is a second program. It does not import `protest`. Install it from that directory with `pipx install .`. The command is `pro-test-msc`. Its README is the code map, the request-to-finding walkthrough, and the differences from this scanner. `msc-edition/VIVA.md` is a study guide. It does not claim a mark.
 
 ## Licence and provenance
 

@@ -115,7 +115,24 @@ quoted from the headers fetched that day.
 Other material
 --------------
 
-Dependencies are the Python standard library only. Nothing else in this tree
-was identified as a copied third-party program. The credential vault in
-protest/core/vault.py is a home-grown HMAC construction, not a copy of a
-published library.
+HTTP, HTML parsing, the crawler, and the report writers use the Python
+standard library. Stored credentials use the `cryptography` package (Fernet).
+That package is under the Apache-2.0 licence or the BSD-3-Clause licence, at
+the choice of the recipient of cryptography. This program is GPL-2.0-or-later.
+A combined distribution is commonly offered under GPL-3, because Apache-2.0
+and GPL-2.0-only do not sit together cleanly. This paragraph is not a legal
+opinion.
+
+`protest/core/vault.py` no longer decrypts the old `pt1:` construction. Those
+rows stay in the database.
+
+msc-edition/
+------------
+
+`msc-edition/` is a separate teaching program with the command `pro-test-msc`.
+It does not import `protest` and it does not copy the sqlmap expressions or
+the Wapiti lines named above. It was drafted with AI assistance for study
+alongside this repository. The student should disclose that use under their
+university's rules. The copyright line follows the rest of this repository.
+It is not a claim that every line was typed without help, and it is not a
+claim about marks or novelty.

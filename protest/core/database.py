@@ -144,9 +144,11 @@ def _redact(text: str, secret: str) -> str:
 class ScanDatabase:
     def __init__(self, path: str = DEFAULT_DATABASE, key_path: Optional[str] = None):
         self.path = path
-        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        from protest.core.paths import ensure_private_dir, tighten_file  # pylint: disable=import-outside-toplevel
+        ensure_private_dir(os.path.dirname(os.path.abspath(path)))
         self.vault = Vault(key_path or os.path.join(os.path.dirname(os.path.abspath(path)), "protest.key"))
         self._db = sqlite3.connect(path)
+        tighten_file(path)
         self._db.execute("PRAGMA foreign_keys = ON")
         self._db.executescript(SCHEMA)
         self._db.commit()

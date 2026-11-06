@@ -26,7 +26,7 @@ from typing import List, Optional, Tuple
 
 from protest.active.base import Attack, random_string
 from protest.active.payloads import PASSWORDS, USERS
-from protest.core.definitions import CONFIRMED, CSRF, WEAK_CREDENTIALS
+from protest.core.definitions import CONFIRMED, CSRF, PROBABLE, WEAK_CREDENTIALS
 from protest.core.evidence import page_summary
 from protest.parsing.page import Html
 from protest.net.client import InvalidURL, RequestError
@@ -113,15 +113,18 @@ class ModuleCsrf(Attack):
             self.add_high(CSRF, request=request, info=f"Lack of anti CSRF token in the form submitted to "
                                                       f"{request.path}",
                           evidence=f"The form only contains these fields: {fields}\n"
-                                   f"None of them is an anti-CSRF token, so any website can make a logged-in "
-                                   f"victim submit it.")
+                                   f"None of them matches a common anti-CSRF token name. That is a missing control, "
+                                   f"not proof that another website can submit the form.",
+                          confidence=PROBABLE)
             return
         name, value = token
         if len(value) < MIN_TOKEN_LENGTH:
             self.add_high(CSRF, request=request, parameter=name,
                           info=f"CSRF token '{name}' of the form submitted to {request.path} is too short to be "
                                f"secure ({len(value)} characters)",
-                          evidence=f"Token value: {value!r} ({len(value)} characters, easy to guess)")
+                          evidence=f"Token value: {value!r} ({len(value)} characters). A short token is a weak "
+                                   f"control, not proof that a forged request is accepted.",
+                          confidence=PROBABLE)
             return
 
         # Fetch a fresh token from the referer (the page holding the form) when possible

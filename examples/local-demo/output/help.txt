@@ -1,6 +1,7 @@
 usage: pro-test [-h] (-u URL | --list-modules) [--data DATA]
-                [--scope {url,page,folder,subdomain,domain,punk}]
-                [-m MODULES_LIST] [-l {1,2}] [-p PROXY_URL]
+                [--scope {url,page,folder,host,subdomain,domain,punk}]
+                [-m MODULES_LIST] [--on-vulnerability {ask,stop,continue}]
+                [--store-response-bodies] [-l {1,2}] [-p PROXY_URL]
                 [--auth-user USERNAME] [--auth-password PASSWORD]
                 [--auth-method {basic,digest}] [--form-user USERNAME]
                 [--form-password PASSWORD] [--form-url URL] [--form-data DATA]
@@ -25,7 +26,7 @@ usage: pro-test [-h] (-u URL | --list-modules) [--data DATA]
                 [--exploit-max-requests N] [--exploit-max-rows N]
                 [--exploit-output OUTPUT_PATH] [--version]
 
-Pro-Test 1.0.0: web application vulnerability scanner (pure Python)
+Pro-Test 1.0.0: web application vulnerability scanner
 
 options:
   -h, --help            show this help message and exit
@@ -34,12 +35,24 @@ options:
   --list-modules        List attack modules and exit
   --data DATA           Urlencoded data to send with the base URL (POST
                         request)
-  --scope {url,page,folder,subdomain,domain,punk}
-                        Set scan scope
+  --scope {url,page,folder,host,subdomain,domain,punk}
+                        Scan scope. folder is the default. host is one
+                        hostname and port. subdomain is the old name for host
+                        and now means the same thing. domain and punk leave
+                        the target host and must be chosen explicitly.
   -m MODULES_LIST, --module MODULES_LIST
-                        List of modules to load (e.g. 'common', 'all',
-                        'passive', 'xss,sql', 'common,-xss', 'all,sql:get').
-                        An empty string means crawl only.
+                        Modules to load. Omitted means passive. 'common' and
+                        'all' send attack traffic. Examples: 'xss,sql',
+                        'common,-xss', 'sql:get'. An empty string crawls only.
+  --on-vulnerability {ask,stop,continue}
+                        What to do when a vulnerability is recorded. On a
+                        terminal the default is ask (Enter stops). Without a
+                        terminal the default is stop. continue keeps scanning.
+  --store-response-bodies
+                        Write response bodies into the session file. The
+                        default keeps them in memory for this process only.
+                        Cookie and Authorization values are redacted either
+                        way.
   -l {1,2}, --level {1,2}
                         Set attack level (2 also injects in the raw query
                         string)
@@ -113,9 +126,9 @@ options:
                         attacked
   --tasks TASKS         Number of concurrent threads
   --profile {standard,quick}
-                        Scan profile: standard = default modules and settings;
-                        quick = default modules, shallow crawl (depth 5, 30
-                        links per page)
+                        Scan profile: standard = passive checks unless -m says
+                        otherwise; quick = passive checks unless -m says
+                        otherwise, shallow crawl (depth 5, 30 links per page)
   --max-rps N           Maximum number of requests per second (0 = unlimited)
   --delay SECONDS       Minimum pause between two requests
   --no-auto-throttle    Don't slow down / retry when the server answers 429 or
