@@ -2,7 +2,7 @@
 
 Pro-Test is a web application vulnerability scanner written in pure Python. It crawls a site, reads each response, optionally sends active checks, and writes a report. The command-line entry point is `pro-test`, which calls `protest.app.cli:main`. With no arguments it opens a numbered interactive menu. There is no curses interface.
 
-The program banner names the author as **Pratham Brahmbhatt**.
+Auther - **Pratham Brahmbhatt**.
 
 **Only scan an application you own or have written permission to test.** The verified walkthrough below uses the localhost fixture in `examples/local-demo/` and the passive checks only (`-m passive`). Read [SECURITY.md](SECURITY.md) before any other use.
 
