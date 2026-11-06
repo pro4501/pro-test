@@ -1,3 +1,12 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
+#
+# Portions of this file share source lines with Wapiti wapitiCore/attack/attack.py
+# (master, fetched 2026-11-06).
+# Copyright (C) 2008-2023 Nicolas Surribas
+# Copyright (C) 2022-2024 Cyberwatch
+# That file's header grants GPL version 2 or any later version.
 """Attack framework: payload model, parameter mutator and the Attack base class.
 
 The Mutator takes an original request and, for every injectable parameter

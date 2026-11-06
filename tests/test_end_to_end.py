@@ -1,3 +1,6 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
 """End-to-end test: scan the fictional Northbridge University practice site with every module and check the report.
 
 The practice server (university_site.py) is not in this source tree. Both test

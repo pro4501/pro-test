@@ -1,3 +1,6 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
 """Reflected (xss) and stored (permanentxss) Cross-Site Scripting modules.
 
 WEAKNESS (CWE-79, OWASP WSTG-INPV-01/02)

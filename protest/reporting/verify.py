@@ -1,3 +1,6 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
 """Live test - re-verification of a weakness found by the scan (menu "What next?" option 2).
 
 The exact attack request recorded during the scan is sent again, next to a normal

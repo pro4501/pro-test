@@ -1,3 +1,6 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
 """Discovery / configuration modules: backup, buster, htaccess, methods, wapp and ssl.
 
 These modules do not inject into parameters; they look for configuration mistakes.

@@ -1,3 +1,6 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
 """SQLite session storage (standard library sqlite3).
 
 One database file per target and scope (~/.pro-test/scans/<host>_<scope>_<hash>.db). Tables:

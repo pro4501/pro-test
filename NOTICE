@@ -1,26 +1,121 @@
 Pro-Test
-Author: Pratham Brahmbhatt
+Author of the original portions: Pratham Brahmbhatt
 Version: 1.0.0
 
-No LICENSE file is included. Copyright remains with the author. This notice
-does not grant a licence to copy, modify, or redistribute the program.
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 2 of the License, or (at your option) any later
+version.
 
-Attribution and provenance:
+The full licence text is the file LICENSE, copied verbatim from
+https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+(fetched 2026-11-06). SPDX identifier: GPL-2.0-or-later.
 
-- The package describes Pro-Test as a clean-room re-implementation of the
-  architecture used by Wapiti (https://wapiti-scanner.github.io). Wapiti is
-  published under GPL-2.0. The author states that Wapiti's source files and
-  data files are not included, and that Pro-Test's code was written for
-  Pro-Test following that design. No Wapiti source file is in this tree.
-  docs/wapiti-analysis.md is the author's design notes. Those notes are not
-  Wapiti's code.
-- protest/active/mod_sql.py includes a list of regular expressions used to
-  recognise database error text. Several of those expressions, including
-  alternations that do not appear in the servers' own messages, match the
-  patterns shipped in sqlmap's errors.xml. sqlmap is GPL-2.0. That list is
-  copied data, not merely the same idea. It is the provenance conflict this
-  tree still carries. Replacing the list, or a later licence choice that
-  satisfies GPL-2.0, is the author's decision. This notice does not make it.
+This notice is not a legal opinion. It records the notices this tree was
+checked against and the material those notices apply to.
 
-Dependencies: the Python standard library only. Nothing else in this tree is a
-vendored copy of Wapiti, sqlmap, or another project.
+Copyright in original portions
+------------------------------
+
+Copyright (C) Pratham Brahmbhatt
+
+The author retains copyright in the portions written for Pro-Test. The grant
+above covers those portions. Names and banners that identify the author stay
+in place.
+
+Why "or later"
+--------------
+
+The copied material named below carries an explicit "version 2 or later"
+grant, so this tree uses GPL-2.0-or-later rather than GPL-2.0-only:
+
+- sqlmap's LICENSE at tag 1.4, and the same file on master, both fetched
+  2026-11-06, say the program may be used under "the GNU General Public
+  License as published by the Free Software Foundation; Version 2 (or later)".
+  Copyright line at tag 1.4: "sqlmap is (C) 2006-2020 Bernardo Damele
+  Assumpcao Guimaraes, Miroslav Stampar." The master copy of that file
+  extends the same authors' stated years to 2006-2026. errors.xml itself has
+  no copyright header.
+- Wapiti source files fetched from master on 2026-11-06 say "either version 2
+  of the License, or (at your option) any later version."
+
+Wapiti's README says "GNU General Public License version 2 (the GPL)" and its
+pyproject.toml classifier is "GNU General Public License v2 (GPLv2)", which
+does not repeat the "or later" words. The source-file headers do. This
+repository follows those headers and sqlmap's "Version 2 (or later)" wording.
+That reading is not a determination that every Wapiti notice is consistent.
+
+sqlmap-derived detection data
+-----------------------------
+
+protest/active/mod_sql.py, the DBMS_ERRORS list.
+
+48 of the 64 regular expressions match sqlmap's data/xml/errors.xml at tag
+1.4 exactly (https://github.com/sqlmapproject/sqlmap/blob/1.4/data/xml/errors.xml,
+fetched 2026-11-06). That file contains this expression as one pattern:
+
+    check the manual that (corresponds to|fits) your (MySQL|MariaDB) server version
+
+The same combined expression is in sqlmap tags 1.0.11, 1.1.11, 1.2.11, 1.3,
+1.3.11, and 1.4. It is not in tag 0.9. Tags 1.5.11, 1.6.12, 1.7.11, 1.8.12,
+and master split MySQL and MariaDB into separate expressions. The exact
+commit this list was taken from was not identified. No sqlmap source tree is
+vendored here.
+
+The other 16 expressions are not exact text from the 1.4 file. They are wider
+alternations, extra phrases, or two ClickHouse expressions. sqlmap master has
+a ClickHouse block, and its regexp is not the same string. Those 16 are still
+shipped inside the sqlmap-derived list; this notice does not claim each one
+was copied unchanged.
+
+Copyright (C) 2006-2020 Bernardo Damele Assumpcao Guimaraes, Miroslav Stampar
+for the expressions that match the 1.4 file, under that tag's GPL version 2
+or later grant. sqlmap's LICENSE also has a preamble of clarifications (a
+broad description of derived works, a note about contributions, and an offer
+of an alternative proprietary licence from the sqlmap authors). Pro-Test does
+not offer that proprietary licence and does not speak for the sqlmap authors.
+The operative licence text distributed here is LICENSE.
+
+Wapiti
+------
+
+Pro-Test is not a vendored copy of Wapiti. The package follows Wapiti's
+architecture. docs/wapiti-analysis.md is the author's notes on the Wapiti
+3.3.2 layout. Those notes are not Wapiti's manual and not Wapiti's code.
+No Wapiti tarball is in this tree.
+
+A line comparison against Wapiti master, fetched 2026-11-06, found shared
+source lines, not just a shared idea:
+
+- protest/active/mod_sql.py GENERIC_PATTERNS uses the same pattern strings and
+  labels as pattern_to_injection in wapitiCore/attack/mod_sql.py. That file's
+  header is Copyright (C) 2008-2023 Nicolas Surribas and Copyright (C)
+  2021-2024 Cyberwatch, GPL version 2 or any later version. The file also
+  points its own DBMS patterns at sqlmap's errors.xml. Current Wapiti splits
+  the MySQL and MariaDB "check the manual" patterns; Pro-Test does not, so
+  that combined expression is attributed to sqlmap above rather than to
+  current Wapiti.
+- protest/active/base.py shares a block of lines with wapitiCore/attack/attack.py
+  (33 lines of at least 30 characters). That file's header is Copyright (C)
+  2008-2023 Nicolas Surribas and Copyright (C) 2022-2024 Cyberwatch, same
+  grant.
+- protest/core/crawler.py shares lines with wapitiCore/net/explorer.py,
+  including limit_parameter_occurrences. That file's header is Copyright (C)
+  2026 Nicolas SURRIBAS and Copyright (C) 2024 Cyberwatch, same grant. The
+  shared lines were not dated individually.
+- protest/net/scope.py, protest/active/mod_file.py, protest/active/mod_exec.py,
+  and protest/active/mod_xss.py each shared only a handful of lines.
+  protest/app/cli.py did not.
+
+Copyright in those shared lines stays with Nicolas Surribas (the headers also
+spell the name Nicolas SURRIBAS) and Cyberwatch, under the GPL version 2 or
+later grant written in the Wapiti files. Year ranges differ by file and are
+quoted from the headers fetched that day.
+
+Other material
+--------------
+
+Dependencies are the Python standard library only. Nothing else in this tree
+was identified as a copied third-party program. The credential vault in
+protest/core/vault.py is a home-grown HMAC construction, not a copy of a
+published library.

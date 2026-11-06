@@ -1,3 +1,6 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
 """Authentication helpers: cookie files, HTTP auth check and login forms.
 
 Most interesting pages of a web application are behind a login, so an unauthenticated scan only

@@ -1,3 +1,6 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
 """Smaller injection modules: CRLF, open redirect, LDAP, XXE (in-band) and Shellshock.
 
 crlf (CWE-93)          Input containing CR/LF characters ends up in a response header. Detected when

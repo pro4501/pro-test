@@ -48,17 +48,20 @@ default answer is no.
   assessments, cookies, tokens, or passwords.
 - Deploy `examples/local-demo/server.py`. It listens on `127.0.0.1` only, on
   purpose, and it omits security headers on purpose.
-- Treat this repository as permission to attack systems, or as a licence to
-  redistribute the program. No licence is granted. See `NOTICE`.
+- Treat this repository as permission to attack systems you are not
+  authorised to test. Copying and modification are covered by the GNU GPL,
+  version 2 or later, in `LICENSE`. That grant is not permission to scan.
+  Attribution is in `NOTICE`.
 
 ## Provenance note
 
-`protest/active/mod_sql.py` contains DBMS-detection regular expressions that
-match sqlmap's GPL-2.0 `errors.xml`, including alternations that are not the
-wording of the database server. That overlap is a copied-data question for the
-author to resolve before publication. It is separate from the tool being a
-scanner. No Wapiti or sqlmap source tree is included here. Design notes in
-`docs/wapiti-analysis.md` are not a copy of Wapiti's code.
+`protest/active/mod_sql.py` includes DBMS-detection regular expressions taken
+from sqlmap's `data/xml/errors.xml` (the combined MySQL/MariaDB pattern matches
+sqlmap tag 1.4). sqlmap's LICENSE grants GPL version 2 or later. The same
+module's pattern-to-label map matches Wapiti's `mod_sql.py`, whose file header
+grants GPL version 2 or any later version. Copyright lines and the comparison
+are in `NOTICE`. No Wapiti or sqlmap source tree is included here. Design
+notes in `docs/wapiti-analysis.md` are not a copy of Wapiti's code.
 
 Credential storage uses a home-grown HMAC construction in
 `protest/core/vault.py` because the standard library has no AES. The module's

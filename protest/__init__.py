@@ -1,7 +1,11 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
 """Pro-Test - a pure-Python (standard library only) web application vulnerability scanner.
 
-Pro-Test is a clean-room re-implementation of the architecture used by the Wapiti
-scanner (https://wapiti-scanner.github.io). A scan is a pipeline of four stages:
+Pro-Test follows the architecture of the Wapiti scanner (https://wapiti-scanner.github.io).
+It is not a vendored copy of Wapiti. Some detection data and some source lines follow
+sqlmap and Wapiti; copyright and licence details are in NOTICE. A scan is a pipeline of four stages:
 
     1. CRAWL     core/crawler.py   follows links and forms to discover every URL and parameter
     2. OBSERVE   passive/checks.py inspects every crawled response (headers, cookies, leaks)

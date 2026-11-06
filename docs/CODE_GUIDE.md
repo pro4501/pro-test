@@ -5,7 +5,7 @@
 
 
 This guide explains how the source code is organised and in which order to read it. Every
-file starts with a docstring explaining its role, and every package (`app/`, `core/`, ...)
+file has a docstring explaining its role. A copyright and licence comment may sit above that docstring. See LICENSE and NOTICE. Every package (`app/`, `core/`, ...)
 has an `__init__.py` docstring that summarises the layer.
 
 ## 1. The big picture

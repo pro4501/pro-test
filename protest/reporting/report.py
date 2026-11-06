@@ -1,3 +1,6 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
 """Report generators: html, json, txt, csv, md and xml.
 
 ReportGenerator collects StoredFinding objects (from the SQLite session) into three sections:

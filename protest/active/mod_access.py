@@ -1,3 +1,6 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
 """Access control module: pages of user A that user B, or a logged-out visitor, can also read.
 
 WEAKNESS (OWASP Top 10 A01, CWE-639 IDOR / CWE-862 missing authorization, WSTG-ATHZ-02/04)

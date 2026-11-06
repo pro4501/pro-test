@@ -6,7 +6,7 @@ The program banner names the author as **Pratham Brahmbhatt**.
 
 **Only scan an application you own or have written permission to test.** The verified walkthrough below uses the localhost fixture in `examples/local-demo/` and the passive checks only (`-m passive`). Read [SECURITY.md](SECURITY.md) before any other use.
 
-No `LICENSE` file is present. Copyright stays with the author. This repository does not grant a licence to copy, modify, or redistribute the program. Attribution is in [NOTICE](NOTICE).
+Pro-Test is free software under the GNU General Public License, version 2 or any later version (GPL-2.0-or-later). The full text is [LICENSE](LICENSE). Copyright in the original portions stays with Pratham Brahmbhatt. [NOTICE](NOTICE) records the sqlmap and Wapiti notices for the detection data and the shared lines. That grant is not permission to scan a system you do not own.
 
 ## Authorisation and explicit opt-in
 
@@ -344,6 +344,8 @@ The command above collects 34 tests. 11 are skipped and 23 are executed. On the 
 
 `tests/test_exploit_step5.py` drives database extraction against an in-process stand-in. It was not executed for this release. `python -m unittest discover -s tests -t .` collects that module as well; use the command above for the release checks. The coverage gap is those 11 skipped cases plus the unrun extraction test.
 
+GitHub Actions runs that same command, on Python 3.11 and 3.12, in `.github/workflows/tests.yml`. The workflow does not discover tests, does not run extraction, and does not contact a host other than what those modules already use (the localhost fixture and a closed `127.0.0.1` port).
+
 `tests/test_units.py` covers requests, the crawler mutator, scope, module-name parsing, the credential vault, and the local XSS context checker. `tests/test_local_demo.py` checks that the fixture stays on `127.0.0.1` and does not reflect input. `tests/test_cli_smoke.py` checks exit codes 2 and 1 for a bad URL and a closed port.
 
 An editable install (`pip install -e .`) keeps the console script pointed at this checkout. Packaging was also checked with a normal `pip install` of this directory into a fresh virtual environment: the wheel builds, `pro-test --version` prints `Pro-Test 1.0.0`, and `pro-test --help` exits 0 from another working directory.
@@ -362,10 +364,16 @@ protest/     scanner package
 tests/       unittest modules
 examples/local-demo/   localhost fixture and LOCAL DEMO / EXAMPLE output
 docs/        author's code guide and Wapiti notes
+LICENSE      GNU GPL version 2 (the program is version 2 or later)
+NOTICE       copyright and provenance for sqlmap and Wapiti material
 ```
 
 ## Licence and provenance
 
-There is no `LICENSE` file. That means normal copyright: the author keeps all rights, and no licence is granted. [NOTICE](NOTICE) keeps the attribution and the provenance notes. One item in that notice is a real copy, not just inspiration: a set of DBMS-detection regular expressions in `protest/active/mod_sql.py` matches sqlmap's GPL-2.0 `errors.xml`, including alternations that are not the database server's own text. No Wapiti or sqlmap source file is vendored in this tree. The architecture notes in `docs/wapiti-analysis.md` describe Wapiti; they are not a copy of its code. Resolving the regex overlap (replace those patterns, or a licence choice that satisfies GPL-2.0) is the provenance decision still open. This repository does not make that choice.
+Pro-Test is released under the GNU General Public License, version 2 or any later version. [LICENSE](LICENSE) is the GPL version 2 text. The "or later" election matches the notices on the copied material: sqlmap's LICENSE says "Version 2 (or later)", and Wapiti's source-file headers say "either version 2 of the License, or (at your option) any later version." Package metadata uses the SPDX identifier `GPL-2.0-or-later` (`license` in `pyproject.toml`). Current setuptools rejects that expression together with the older "GPLv2+" trove classifier, so the classifier is not set. The SPDX field is the machine-readable statement.
+
+Copyright in the original portions belongs to Pratham Brahmbhatt. [NOTICE](NOTICE) keeps the upstream copyright lines. In short: 48 of the 64 DBMS error expressions in `protest/active/mod_sql.py` match sqlmap `data/xml/errors.xml` at tag 1.4, including the combined MySQL/MariaDB "check the manual" pattern (sqlmap copyright 2006-2020 Bernardo Damele Assumpcao Guimaraes and Miroslav Stampar). `GENERIC_PATTERNS` in that module, and a block of lines in `protest/active/base.py` and `protest/core/crawler.py`, match Wapiti source fetched from master on 2026-11-06 (copyright Nicolas Surribas and Cyberwatch). No Wapiti or sqlmap tree is vendored. `docs/wapiti-analysis.md` is the author's notes, not Wapiti's manual.
+
+Wapiti's README and PyPI classifier say "GPL version 2" without repeating "or later", while its source headers include "or later". NOTICE follows the source headers and sqlmap's wording. That is a reading of the notices, not a legal opinion. sqlmap's LICENSE also contains the authors' clarifications and an offer of their own alternative proprietary licence. This repository does not offer that proprietary licence.
 
 ![Lower portion of pro-test --help, captured in xterm](examples/local-demo/screenshots/help.png)

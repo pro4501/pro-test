@@ -1,3 +1,6 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
 """Command / code execution module (pattern based and time based detection).
 
 WEAKNESS (CWE-78 / CWE-94, OWASP WSTG-INPV-12)

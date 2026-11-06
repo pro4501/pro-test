@@ -1,3 +1,6 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
 """A tiny DOM tree built on html.parser (standard library).
 
 It deliberately mimics how BeautifulSoup's "html.parser" builder behaves, because

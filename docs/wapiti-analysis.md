@@ -1,12 +1,12 @@
 # Wapiti 3.3.2: how it works
 
-> Author's design notes, imported with the source. Wapiti is GPL-2.0 software. This file records how Pro-Test's layout relates to that design. It is not a licence for Pro-Test, and it is not permission to scan systems you do not own. See [SECURITY.md](../SECURITY.md).
+> Author's design notes on the Wapiti 3.3.2 layout. They are not Wapiti's manual and they are not Wapiti's code. Pro-Test is GPL-2.0-or-later; see [LICENSE](../LICENSE) and [NOTICE](../NOTICE). These notes are not permission to scan systems you do not own. See [SECURITY.md](../SECURITY.md).
 
 
 
 This is the analysis behind Pro-Test. It was written by reading the Wapiti 3.3.2 source distribution
 (`wapiti3-3.3.2.tar.gz` from PyPI: 160 Python files, about 23,500 lines of code plus payload data). Wapiti is
-open source (GPL-2.0) and written in Python, so studying its source is the reverse engineering. There is no
+open source. Its source-file headers grant GPL version 2 or any later version. Studying that source is what these notes record. There is no
 compiled binary to decompile.
 
 ## 1. Overall design

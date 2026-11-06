@@ -1,3 +1,17 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
+#
+# DBMS_ERRORS is derived from sqlmap's data/xml/errors.xml. The combined
+# MySQL|MariaDB pattern matches that file at sqlmap tag 1.4.
+# Copyright (C) 2006-2020 Bernardo Damele Assumpcao Guimaraes, Miroslav Stampar.
+# sqlmap's LICENSE at that tag grants GPL version 2 or later.
+#
+# GENERIC_PATTERNS matches Wapiti wapitiCore/attack/mod_sql.py
+# (master, fetched 2026-11-06).
+# Copyright (C) 2008-2023 Nicolas Surribas
+# Copyright (C) 2021-2024 Cyberwatch
+# That file's header grants GPL version 2 or any later version.
 """SQL injection modules: error-based + boolean-based (sql) and time-based (timesql).
 
 WEAKNESS (CWE-89, OWASP WSTG-INPV-05)

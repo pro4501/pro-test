@@ -1,3 +1,12 @@
+# Copyright (C) Pratham Brahmbhatt
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Licensed under the GNU GPL, version 2 or any later version. See LICENSE and NOTICE.
+#
+# Portions of this file share source lines with Wapiti wapitiCore/net/explorer.py
+# (master, fetched 2026-11-06), including limit_parameter_occurrences.
+# Copyright (C) 2026 Nicolas SURRIBAS
+# Copyright (C) 2024 Cyberwatch
+# That file's header grants GPL version 2 or any later version.
 """Threaded breadth-first crawler.
 
 Same exploration rules as Wapiti's Explorer:
