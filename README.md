@@ -35,11 +35,15 @@ No phone-home request, persistence mechanism, or hardcoded customer target was f
 
 ## Install
 
-Create the virtual environment from the repository root, then install this tree. The install does not need network access beyond what `pip` uses to fetch `setuptools` if it is not already present.
+Clone the repository, then run the rest of the commands in that checkout. The repository root is the directory that contains `pyproject.toml`. `pip install .` installs that directory, so it fails if the shell is still in your home directory or another folder.
 
-### Linux and macOS
+Git needs network access for the clone. After that, `pip` only needs network access if it has to fetch `setuptools`.
+
+### Linux, Kali, and macOS
 
 ```bash
+git clone https://github.com/pro4501/pro-test.git
+cd pro-test
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install .
@@ -50,6 +54,8 @@ pro-test --help
 ### Windows PowerShell
 
 ```powershell
+git clone https://github.com/pro4501/pro-test.git
+cd pro-test
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install .
@@ -316,7 +322,8 @@ Differences the author recorded relative to Wapiti (headless browsing, an interc
 
 | What you see | What it means |
 |---|---|
-| `pro-test: command not found` | The virtual environment is not active, or `pip install .` has not been run. `python -m protest --help` from this repository still works. |
+| `Directory '.' is not installable` | `pip install .` did not run in the repository root. `cd pro-test` (the folder that contains `pyproject.toml`) and run the install again. |
+| `pro-test: command not found` | The virtual environment is not active, or `pip install .` failed before it installed the `pro-test` command. From the repository root, run `source .venv/bin/activate` (PowerShell: `.\.venv\Scripts\Activate.ps1`) and then `python -m pip install .` again. `python -m protest --help` from that directory still works. |
 | `No module named protest` | The current directory is not the repository and the package is not installed. |
 | `invalid choice: 'safe'` | The only profiles are `standard` and `quick`. |
 | `Invalid base URL` and exit 2 | Include `http://` or `https://`. |
