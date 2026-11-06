@@ -1,3 +1,5 @@
 * text=auto eol=lf
 *.png binary
 *.gif binary
+# The csv module writes CRLF. Keep the sample report as the tool emitted it.
+examples/local-demo/output/report.csv -text
