@@ -1,7 +1,7 @@
 type,category,severity,confidence,method,url,parameter,payload,evidence,info,module,wstg,curl
 vulnerability,Clickjacking Protection,Low,Confirmed,GET,http://127.0.0.1:8765/,,,"Headers received from http://127.0.0.1:8765/ (no X-Frame-Options):
     Server: Pro-Test-Local-Demo Python/3.12.3
-    Date: Fri, 06 Nov 2026 15:14:24 GMT
+    Date: Fri, 06 Nov 2026 15:16:22 GMT
     Content-Type: text/html; charset=utf-8
     Content-Length: 819
     Cache-Control: no-store
@@ -9,7 +9,7 @@ vulnerability,Clickjacking Protection,Low,Confirmed,GET,http://127.0.0.1:8765/,,
     Connection: close",X-Frame-Options is not set on http://127.0.0.1:8765/,http_headers,WSTG-CLNT-09,"curl ""http://127.0.0.1:8765/"""
 vulnerability,MIME Type Confusion,Low,Confirmed,GET,http://127.0.0.1:8765/,,,"Headers received from http://127.0.0.1:8765/ (no X-Content-Type-Options):
     Server: Pro-Test-Local-Demo Python/3.12.3
-    Date: Fri, 06 Nov 2026 15:14:24 GMT
+    Date: Fri, 06 Nov 2026 15:16:22 GMT
     Content-Type: text/html; charset=utf-8
     Content-Length: 819
     Cache-Control: no-store
